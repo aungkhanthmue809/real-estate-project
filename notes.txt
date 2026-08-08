@@ -1,0 +1,5 @@
+backend/src/main/resources/application-local.properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/realestate
+spring.datasource.username=postgres
+spring.datasource.password= OWN_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
