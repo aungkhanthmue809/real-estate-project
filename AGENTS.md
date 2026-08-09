@@ -1,2 +1,0 @@
-exactly explain to me the changes you will make before actually writing anything in
-write down critical changes in the word file called realstate document as log use same format as the previous written log plain sharp and delivers exactly wahts done
