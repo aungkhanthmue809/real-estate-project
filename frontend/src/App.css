@@ -68,6 +68,7 @@
   -webkit-line-clamp: 3;
 }
 
+@layer components {
 /* Shared layout container (dashboard / admin / add-edit pages) */
 .section-container {
   width: 100%;
@@ -186,4 +187,5 @@
   font-weight: 600;
   color: #475569;
   margin-bottom: 6px;
+}
 }

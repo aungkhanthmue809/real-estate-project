@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html {
   scroll-behavior: smooth;
 }
@@ -25,6 +19,7 @@ body {
   min-height: 100vh;
 }
 
+@layer components {
 /* ===== NAVBAR ===== */
 .navbar {
   position: fixed;
@@ -2103,4 +2098,5 @@ body {
   .detail-features-grid {
     grid-template-columns: 1fr;
   }
+}
 }
