@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut, Globe } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut, Globe, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -7,8 +7,13 @@ import { NotificationsBell } from './NotificationsBell';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  const isActive = (path: string) => pathname === path ? 'navbar-link active' : 'navbar-link';
+  const isKnowledgeActive = pathname === '/loan-calculator';
 
   return (
     <nav className="navbar">
@@ -21,10 +26,21 @@ export function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/?type=buy" className="navbar-link">Buy</Link>
-          <Link to="/?type=rent" className="navbar-link">Rent</Link>
-          <Link to="/about" className="navbar-link">About</Link>
-          <Link to="/contact" className="navbar-link">Contact</Link>
+          <Link to="/" className={isActive('/')}>Home</Link>
+          <Link to="/about" className={isActive('/about')}>About</Link>
+          <Link to="/contact" className={isActive('/contact')}>Contact</Link>
+          <Link to="/how-it-works" className={isActive('/how-it-works')}>{t('navHowItWorks')}</Link>
+          <Link to="/faq" className={isActive('/faq')}>FAQ</Link>
+          <div className="navbar-dropdown" onMouseEnter={() => setKnowledgeOpen(true)} onMouseLeave={() => setKnowledgeOpen(false)}>
+            <span className={`navbar-link ${isKnowledgeActive ? 'active' : ''}`}>
+              {t('navKnowledge')} <ChevronDown className={`navbar-chevron ${knowledgeOpen ? 'open' : ''}`} />
+            </span>
+            {knowledgeOpen && (
+              <div className="navbar-dropdown-menu">
+                <Link to="/loan-calculator" className="navbar-dropdown-item" onClick={() => setKnowledgeOpen(false)}>{t('navLoanCalc')}</Link>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="navbar-actions">
@@ -71,18 +87,29 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu active">
-          <Link to="/?type=buy" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-            <Home className="w-5 h-5" /> Buy
+          <Link to="/" className={isActive('/')} onClick={() => setMobileOpen(false)}>
+            <Home className="w-5 h-5" /> Home
           </Link>
-          <Link to="/?type=rent" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-            <Home className="w-5 h-5" /> Rent
-          </Link>
-          <Link to="/about" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+          <Link to="/about" className={isActive('/about')} onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> About Us
           </Link>
-          <Link to="/contact" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+          <Link to="/contact" className={isActive('/contact')} onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> Contact
           </Link>
+          <Link to="/how-it-works" className={isActive('/how-it-works')} onClick={() => setMobileOpen(false)}>
+            <Home className="w-5 h-5" /> {t('navHowItWorks')}
+          </Link>
+          <Link to="/faq" className={isActive('/faq')} onClick={() => setMobileOpen(false)}>
+            <Home className="w-5 h-5" /> FAQ
+          </Link>
+          <button className={`mobile-menu-link ${isKnowledgeActive ? 'active' : ''}`} onClick={() => setKnowledgeOpen(!knowledgeOpen)}>
+            <Home className="w-5 h-5" /> {t('navKnowledge')} <ChevronDown className={`mobile-chevron ${knowledgeOpen ? 'open' : ''}`} />
+          </button>
+          {knowledgeOpen && (
+            <div className="mobile-submenu">
+              <Link to="/loan-calculator" className={isActive('/loan-calculator')} onClick={() => setMobileOpen(false)}>{t('navLoanCalc')}</Link>
+            </div>
+          )}
           <Link to="/user/my-properties" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
             <LayoutDashboard className="w-5 h-5" /> Dashboard
           </Link>

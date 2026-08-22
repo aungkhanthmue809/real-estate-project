@@ -3,6 +3,9 @@ import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { AboutUs } from './pages/AboutUs';
 import { ContactUs } from './pages/ContactUs';
+import { HowItWorks } from './pages/HowItWorks';
+import { Faq } from './pages/Faq';
+import { LoanCalculator } from './pages/LoanCalculator';
 import { LegalPage } from './pages/LegalPage';
 import { LoginRegister } from './pages/LoginRegister';
 import { PropertyDetails } from './pages/PropertyDetails';
@@ -28,6 +31,9 @@ function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/faq" element={<Faq />} />
+          <Route path="/loan-calculator" element={<LoanCalculator />} />
           <Route path="/privacy" element={<LegalPage section="privacy" />} />
           <Route path="/terms" element={<LegalPage section="terms" />} />
           <Route path="/cookies" element={<LegalPage section="cookies" />} />
