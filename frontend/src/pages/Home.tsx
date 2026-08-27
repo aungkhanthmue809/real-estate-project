@@ -79,6 +79,7 @@ function PropertyCard({ property, favoriteIds }: { property: Property; favoriteI
 export function Home() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
   const { language } = useLanguage();
   const [listingType, setListingType] = useState(searchParams.get('type') === 'rent' ? 'rent' : 'buy');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
