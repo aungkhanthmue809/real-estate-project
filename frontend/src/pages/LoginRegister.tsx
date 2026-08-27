@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,10 @@ export function LoginRegister() {
 
   const isLogin = location.pathname === '/login';
   const [mode, setMode] = useState<'signin' | 'signup'>(isLogin ? 'signin' : 'signup');
+
+  useEffect(() => {
+    setMode(location.pathname === '/login' ? 'signin' : 'signup');
+  }, [location.pathname]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

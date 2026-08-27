@@ -14,9 +14,9 @@ const FEATURES = [
   { icon: Shield, titleEn: 'Secure Transactions', titleMy: 'လုံခြုံသော ငွေပေးချေမှု', descEn: 'Encrypted documents and verified agents for a trusted buying experience.', descMy: 'Encrypted documents and verified agents for a trusted buying experience.' },
 ];
 
-function PropertyCard({ property }: { property: Property }) {
+function PropertyCard({ property, favoriteIds }: { property: Property; favoriteIds: Set<number> }) {
   const { isAuthenticated } = useAuth();
-  const [isFav, setIsFav] = useState(false);
+  const [isFav, setIsFav] = useState(favoriteIds.has(property.id));
 
   const badge = property.status === 'FOR_RENT' ? 'For Rent' : 'For Sale';
   const isForRent = property.status === 'FOR_RENT';
@@ -83,6 +83,7 @@ export function Home() {
   const [listingType, setListingType] = useState(searchParams.get('type') === 'rent' ? 'rent' : 'buy');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [properties, setProperties] = useState<Property[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,7 +97,16 @@ export function Home() {
       .then((res) => setProperties(res.data))
       .catch(() => setProperties([]))
       .finally(() => setLoading(false));
-  }, [searchParams]);
+
+    if (isAuthenticated) {
+      propertyAPI
+        .getFavorites()
+        .then((res) => setFavoriteIds(new Set(res.data.map((f) => f.id))))
+        .catch(() => {});
+    } else {
+      setFavoriteIds(new Set());
+    }
+  }, [searchParams, isAuthenticated]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,7 +179,7 @@ export function Home() {
         ) : (
           <div className="properties-grid">
             {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard key={property.id} property={property} favoriteIds={favoriteIds} />
             ))}
             {properties.length === 0 && (
               <div className="col-span-full text-center py-16 text-slate-500">

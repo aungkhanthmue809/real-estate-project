@@ -4,6 +4,7 @@ import { Users, Home, Clock, CheckCircle, XCircle, Eye, Settings, Briefcase, Shi
 import { useAuth } from '../contexts/AuthContext';
 import { adminAPI, userAPI } from '../utils/api';
 import type { Property, User } from '../types';
+import { PropertyImage } from '../components/PropertyImage';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -113,7 +114,7 @@ export function AdminDashboard() {
                   {pendingProperties.map((property) => (
                     <div key={property.id} className="p-5 hover:bg-slate-50 transition-colors">
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <img src={property.imageUrl} alt={property.title} className="w-full sm:w-28 h-28 object-cover rounded-xl" onError={(e) => { (e.currentTarget).style.visibility = 'hidden'; }} />
+                        <PropertyImage src={property.imageUrl} alt={property.title} className="w-full sm:w-28 h-28 object-cover rounded-xl" />
                         <div className="flex-1">
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                             <div>
@@ -164,7 +165,7 @@ export function AdminDashboard() {
                   approvedProperties.map((property) => (
                     <div key={property.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <img src={property.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover" onError={(e) => { (e.currentTarget).style.visibility = 'hidden'; }} />
+                        <PropertyImage src={property.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-800 truncate">{property.title}</p>
                           <p className="text-sm text-slate-500">{property.location}</p>

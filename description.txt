@@ -1,0 +1,210 @@
+UrbanNest Real Estate Project - Full Description
+================================================
+
+1. PROJECT STRUCTURE
+--------------------
+
+real-estate-project/
+  backend/                  -- Spring Boot 4.1.0 (Java 21, Gradle)
+    src/main/java/com/urbannest/backend/
+      BackendApplication.java           -- Entry point
+      config/
+        DataSeeder.java                 -- Seeds admin + demo user on first run
+      model/
+        User.java                       -- JPA entity (id, username, email, password, phone, role, createdAt)
+        Property.java                   -- JPA entity (id, title, description, price, location, propertyType, status, approvalStatus, bedrooms, bathrooms, area, imageUrl, owner[ManyToOne->User], createdAt)
+        Favorite.java                   -- JPA entity (id, user[ManyToOne->User], property[ManyToOne->Property], createdAt)
+        Role.java                       -- Enum: USER, ADMIN
+        PropertyType.java               -- Enum: APARTMENT, HOUSE, CONDO, LAND, TOWNHOUSE
+        SaleStatus.java                 -- Enum: FOR_SALE, FOR_RENT
+        ApprovalStatus.java             -- Enum: PENDING, APPROVED, REJECTED
+      dto/
+        RegisterRequest.java            -- record(username, email, password, phone) with @Valid
+        LoginRequest.java               -- record(username, password) with @Valid
+        AuthResponse.java               -- record(token, id, username, email, phone, role)
+        PropertyRequest.java            -- record(title, description, price, location, propertyType, status, bedrooms, bathrooms, area, imageUrl) with @Valid
+        PropertyResponse.java           -- record(id, title, description, price, location, propertyType, status, bedrooms, bathrooms, area, imageUrl, approvalStatus, owner, ownerPhone, createdAt)
+        UserResponse.java               -- record(id, username, email, phone, role)
+        MessageResponse.java            -- record(message)
+        UpdateProfileRequest.java       -- record(email, phone)
+        ChangePasswordRequest.java      -- record(currentPassword, newPassword)
+        UpdateRoleRequest.java          -- record(role)
+      repository/
+        UserRepository.java             -- JPA repo + findByUsername, findByEmail, existsByUsername, existsByEmail
+        PropertyRepository.java         -- JPA repo + JpaSpecificationExecutor + findByOwner_IdOrderByCreatedAtDesc, findByApprovalStatusOrderByCreatedAtDesc
+        FavoriteRepository.java         -- JPA repo + findByUserIdOrderByCreatedAtDesc, findByUserIdAndPropertyId, existsByUserIdAndPropertyId, deleteByPropertyId, deleteByUserId
+      security/
+        JwtUtil.java                    -- Generates/validates JWT tokens using HMAC-SHA. Reads app.jwt.secret and app.jwt.expiration-ms from properties.
+        JwtAuthenticationFilter.java    -- OncePerRequestFilter. Extracts Bearer token from Authorization header, validates it, loads User from DB, sets SecurityContext.
+        SecurityConfig.java             -- SecurityFilterChain. Disables CSRF, stateless sessions, CORS for localhost:5173. Defines URL-level authorization rules.
+      controller/
+        AuthController.java             -- POST /api/auth/register, POST /api/auth/login, GET /api/auth/me
+        PropertyController.java         -- GET /api/properties (search), GET /api/properties/mine, POST /api/properties, GET /api/properties/{id}, PUT /api/properties/{id}, DELETE /api/properties/{id}
+        UserController.java             -- PUT /api/users/me, PUT /api/users/me/password, GET /api/users (admin), PUT /api/users/{id} (admin), DELETE /api/users/{id} (admin)
+        FavoriteController.java         -- GET /api/favorites, POST /api/properties/{id}/favorite, DELETE /api/properties/{id}/favorite
+        AdminPropertyController.java    -- GET /api/admin/properties, PUT /api/admin/properties/{id}/approve, PUT /api/admin/properties/{id}/reject, PUT /api/admin/properties/{id}, DELETE /api/admin/properties/{id}
+        CurrentUser.java                -- Helper to extract User from Authentication, throws ApiException if not logged in
+      service/
+        AuthService.java                -- register (creates USER), login (returns JWT), toAuthResponse, toUserResponse
+        PropertyService.java            -- search (JPA Specifications with keyword/type/status/location/price/sort), getById (approved only), getByIdForOwnerOrAdmin, create, getMine, update (owner only), delete (owner only, cascades favorites)
+        UserService.java                -- updateProfile, changePassword, getAll (admin), updateRole (admin), delete (admin, cascades properties+favorites)
+        FavoriteService.java            -- getFavorites, add (idempotent), remove
+        AdminService.java               -- getAll (all properties, optional approvalStatus filter), approve, reject, update, delete
+      exception/
+        ApiException.java               -- RuntimeException with HttpStatus status
+        GlobalExceptionHandler.java     -- @RestControllerAdvice. Handles ApiException, MethodArgumentNotValidException, HttpMessageNotReadableException, generic Exception.
+    src/main/resources/
+      application.properties            -- spring.profiles.active=local
+      application-local.properties      -- PostgreSQL connection, JWT secret + expiration
+
+  frontend/                 -- React 19 + TypeScript + Vite 8 + Tailwind CSS 4
+    src/
+      main.tsx                           -- Entry point, renders <App />
+      App.tsx                            -- Router setup. Wraps everything in LanguageProvider > AuthProvider > BrowserRouter. Defines all routes.
+      App.css                            -- Custom CSS (animations, navbar, hero, search, property cards, features, CTA, footer, mobile menu, responsive breakpoints, auth pages, property detail page styles)
+      index.css                          -- Tailwind import + body styles
+      types/
+        index.ts                         -- TypeScript interfaces: User, AuthResponse, Property, PropertyRequest, PropertyType, SaleStatus, ApprovalStatus, YangonTownship, MyanmarProperty
+      contexts/
+        AuthContext.tsx                   -- AuthProvider: manages user state + localStorage (urbannest-token, urbannest-user). On mount, validates token via GET /api/auth/me. Provides login, register, logout, updateProfile.
+        LanguageContext.tsx               -- LanguageProvider: hardcoded to 'en'. Provides t() translation function. Language switching is disabled.
+      utils/
+        api.ts                           -- Axios instance (baseURL: http://localhost:8080). Attaches Bearer token from localStorage. Handles 401 by clearing token and redirecting to /login. Exports: authAPI, userAPI, propertyAPI, adminAPI.
+      components/
+        Navbar.tsx                       -- Fixed top navbar. Shows logo, sign in/get started (logged out), dashboard + add property/admin + sign out (logged in). Has mobile hamburger menu.
+        Avatar.tsx                       -- Initials-based avatar with random color.
+        PropertyImage.tsx                -- <img> with SVG placeholder fallback on error or missing src.
+      pages/
+        Home.tsx                         -- Landing page. Hero section with search (keyword + buy/rent toggle). Fetches approved properties via search API. Shows stats, featured property cards, features section, CTA, footer. PropertyCard shows favorite heart (synced with user's favorites).
+        LoginRegister.tsx                -- Combined login/register page. Mode synced with URL (/login or /register). Shows error messages from backend.
+        PropertyDetails.tsx              -- Single property view. Tabs: Overview (description), Contact (owner phone/viber). Shows specs, mortgage estimate, share buttons. Favorite toggle for logged-in users.
+        Dashboard.tsx                    -- User dashboard. Tabs: My Properties (list with status badges, edit/delete), Saved Favorites (list with remove), Profile & Security (update email/phone, change password).
+        AddEditProperty.tsx              -- Multi-step form (4 steps: Property Info, Specifications, Description, Media/Image URL). Creates or updates property. Submits for approval.
+        AdminDashboard.tsx               -- Admin panel. Shows stats (users, properties, pending). Lists pending properties with approve/reject buttons. Shows recently approved.
+        AdminDataManagement.tsx          -- Admin CRUD. Tabs: Users (table with role toggle, delete), Properties (table with status badge, view, delete). Search filter.
+    vite.config.ts                       -- Vite config: React plugin, Tailwind plugin, dev server on port 5173.
+
+2. HOW FEATURES ARE IMPLEMENTED
+--------------------------------
+
+AUTHENTICATION:
+- Registration: POST /api/auth/register with username/email/password/phone. Backend hashes password with BCrypt, saves user with role USER, returns JWT.
+- Login: POST /api/auth/login. Validates credentials, returns JWT.
+- JWT flow: Frontend stores token in localStorage (urbannest-token). Axios interceptor attaches "Authorization: Bearer <token>" to every request. JwtAuthenticationFilter on backend validates token on every request, loads User from DB, sets Spring Security context.
+- Auto-login: On app mount, AuthContext checks if token exists in localStorage, calls GET /api/auth/me to validate it. If invalid, clears token.
+- Logout: Clears token + user from localStorage, sets user state to null.
+- 401 handling: Axios response interceptor catches 401 responses, clears token, redirects to /login.
+
+PROPERTY LISTING (PUBLIC):
+- Home page fetches approved properties via GET /api/properties with optional query params (keyword, type, status, location, minPrice, maxPrice, sort, dir).
+- Backend PropertyService.search() builds JPA Specifications dynamically. Always filters by approvalStatus=APPROVED. Only APPROVED properties are visible to the public.
+- Property cards show image (with placeholder fallback), title, type badge, location, beds/baths/sqft, price, and a favorite heart button.
+
+PROPERTY CREATION (LOGGED-IN USERS):
+- Multi-step form: Step 1 (title, listing type, property type, price, township from predefined list), Step 2 (bedrooms, bathrooms, sqft), Step 3 (description), Step 4 (image URL).
+- POST /api/properties creates property with approvalStatus=PENDING. Not visible on public listing until admin approves.
+- PUT /api/properties/{id} updates property (owner only). Resets approvalStatus to PENDING.
+
+PROPERTY APPROVAL (ADMIN):
+- AdminDashboard shows pending properties (GET /api/admin/properties?approvalStatus=PENDING).
+- Admin can approve (PUT /api/admin/properties/{id}/approve) or reject (PUT /api/admin/properties/{id}/reject).
+- AdminDataManagement shows all properties with ability to view or delete.
+
+FAVORITES:
+- Logged-in users can favorite/unfavorite properties via POST/DELETE /api/properties/{id}/favorite.
+- Backend uses a Favorite entity (unique constraint on user_id + property_id) to prevent duplicates.
+- Dashboard shows user's favorites (GET /api/favorites).
+- Home page PropertyCard initializes heart state from fetched favorites list.
+
+USER MANAGEMENT (ADMIN):
+- AdminDashboard shows total users, pending approvals.
+- AdminDataManagement shows user table with role toggle (ADMIN <-> USER) and delete.
+- Admin can update any user's role or delete any user (cascades to their properties and favorites).
+
+PROFILE MANAGEMENT:
+- Dashboard "Profile & Security" tab allows updating email/phone (PUT /api/users/me) and changing password (PUT /api/users/me/password).
+
+3. FRONTEND/BACKEND CONNECTION
+-------------------------------
+
+- Frontend runs on http://localhost:5173 (Vite dev server)
+- Backend runs on http://localhost:8080 (Spring Boot + Tomcat)
+- Frontend connects directly to backend via Axios with baseURL "http://localhost:8080"
+- CORS is configured in SecurityConfig.java to allow http://localhost:5173
+- API endpoints used by frontend:
+  * authAPI: POST /api/auth/register, POST /api/auth/login, GET /api/auth/me
+  * userAPI: PUT /api/users/me, PUT /api/users/me/password, GET /api/users, PUT /api/users/{id}, DELETE /api/users/{id}
+  * propertyAPI: GET /api/properties, GET /api/properties/mine, POST /api/properties, GET /api/properties/{id}, PUT /api/properties/{id}, DELETE /api/properties/{id}, GET /api/favorites, POST /api/properties/{id}/favorite, DELETE /api/properties/{id}/favorite
+  * adminAPI: GET /api/admin/properties, PUT /api/admin/properties/{id}/approve, PUT /api/admin/properties/{id}/reject, PUT /api/admin/properties/{id}, DELETE /api/admin/properties/{id}
+
+4. SECURITY CONFIGURATION
+--------------------------
+
+URL-level rules (SecurityConfig.java):
+- POST /api/auth/register, POST /api/auth/login -> permitAll (public)
+- GET /api/auth/me -> authenticated
+- PUT /api/users/me, PUT /api/users/me/password -> authenticated
+- GET /api/users, PUT /api/users/*, DELETE /api/users/* -> hasRole('ADMIN')
+- GET /api/properties/mine, POST /api/properties, PUT /api/properties/*, DELETE /api/properties/* -> authenticated
+- GET /api/properties, GET /api/properties/* -> permitAll (public read)
+- /api/favorites, /api/favorites/** -> authenticated
+- POST/DELETE /api/properties/*/favorite -> authenticated
+- /api/admin/** -> hasRole('ADMIN')
+- Everything else -> authenticated
+
+Method-level security: @EnableMethodSecurity is enabled. Some controllers also use @PreAuthorize("hasRole('ADMIN')") as defense-in-depth.
+
+5. DATABASE
+------------
+
+- PostgreSQL on localhost:5432, database "realestate", user "postgres"
+- Tables: users, properties, favorites
+- Properties.owner is a foreign key to users.id (required, LAZY fetch)
+- Favorites has a unique constraint on (user_id, property_id)
+- DataSeeder creates admin (admin/admin12345) and demo (demo/demo12345) on first run when users table is empty.
+
+6. REMAINING ERRORS / ISSUES
+------------------------------
+
+A. AddEditProperty multi-step form doesn't validate per step (UX issue):
+   - File: frontend/src/pages/AddEditProperty.tsx
+   - The "Next" button is type="button" so it skips HTML5 required validation.
+   - Users can click through all 4 steps with empty fields. Validation only fires on final submit (step 4), but the user can't see which fields on earlier steps are missing.
+   - Fix: Add a validateStep(currentStep) function in handleNext that checks current step's required fields before advancing.
+
+B. LanguageContext has dead code:
+   - File: frontend/src/contexts/LanguageContext.tsx
+   - The t() function, translations object, and LanguageContext interface still exist but language is hardcoded to 'en'.
+   - setLanguage and toggleLanguage are no-ops.
+   - Either remove the entire language system or re-enable language switching.
+
+C. Home.tsx still has Myanmar text in FEATURES array (lines 11-15):
+   - titleMy and descMy fields exist in the FEATURES objects but are never used since language is always 'en'.
+   - Minor dead code, harmless.
+
+D. No pagination anywhere:
+   - Backend returns all records for properties, users, favorites.
+   - Would be slow with large datasets but fine for a school project.
+
+E. N+1 query pattern:
+   - PropertyService.toResponse() accesses property.getOwner() which triggers lazy loading.
+   - When called in loops (search results, favorites list), this causes separate DB queries for each property's owner.
+   - Fix would require @EntityGraph or JOIN FETCH queries in repositories.
+
+F. Admin can delete themselves or the last admin:
+   - File: backend/src/main/java/com/urbannest/backend/service/UserService.java
+   - No guard preventing an admin from deleting their own account or the last admin account.
+
+G. AdminDashboard pending property images use raw <img> via PropertyImage component:
+   - Already fixed to use PropertyImage with placeholder fallback.
+   - But the AdminDataManagement page still uses raw <img> with onError hide for property images in the table (lines 216).
+   - Minor visual glitch if image URL is broken.
+
+H. Some CSS classes defined in index.css (auth-page, auth-signin, auth-left, etc.) are not used by the current LoginRegister.tsx component which uses Tailwind classes directly.
+   - Dead CSS, harmless but could be cleaned up.
+
+I. The Favorites feature on Dashboard calls propertyAPI.getFavorites() which returns PropertyResponse objects (not Favorite objects). This means we lose the favorite ID and can't distinguish between "property ID" and "favorite ID" if they ever differ. Currently fine since favorite.id != property.id but the code uses property.id for removal which is correct.
+
+J. Navbar mobile menu doesn't show an Admin link for admin users.
+   - File: frontend/src/components/Navbar.tsx
+   - Desktop navbar shows "Admin" button for ADMIN role, but the mobile dropdown (lines 47-55) only has Dashboard and Favorites links.

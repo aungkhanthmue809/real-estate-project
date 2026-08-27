@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 
 interface LanguageContextType {
   language: string;
@@ -142,145 +142,12 @@ const translations: Record<string, Record<string, string>> = {
     reject: 'Reject',
     featuresAmenities: 'Features & Amenities',
   },
-  my: {
-    home: 'အိမ်',
-    favorites: 'ကြိုက်နှစ်သက်',
-    signIn: 'ဝင်ရောက်',
-    getStarted: 'စတင်',
-    signOut: 'ထွက်',
-    dashboard: 'ဒက်ရှ်ဘုတ်',
-    addProperty: 'အိမ်ထည့်',
-    adminPanel: 'Admin Panel',
-    activeListings: 'တိုင်းဒေသကြီးတစ်ဝိုက် အိမ်ခြံမြေ စာရင်းများ',
-    heroTitle: 'သင့်အိမ်အကောင်းဆုံးကို ပိုမိုလွယ်ကူစွာ ရှာဖွေပါ။',
-    heroSubtitle: 'ဉာဏ်ရည်တု စစ်ထုတ်မှုများ၊ ချက်ချင်း သတိပေးချက်များနှင့် အတည်ပြုထားသော အေဂျင့်များဖြင့် စာရင်းပေါင်းများစွာကို ရှာဖွေပါ။',
-    buy: 'ဝယ်',
-    rent: 'ငှား',
-    searchLocation: 'မြို့နယ်၊ ရပ်ကွက် သို့မဟုတ် ZIP code',
-    searchHomes: 'အိမ်များ ရှာဖွေပါ',
-    activeListingsCount: 'လက်ရှိ စာရင်း',
-    citiesCovered: 'မြို့ပေါင်း',
-    happyBuyers: 'ပျော်ရွှင်သော ဝယ်ယူသူများ',
-    agentPartners: 'Agent ပူးပေါင်းဆောင်ရွက်သူများ',
-    handPicked: 'ရွေးချယ်ထားသည်',
-    featuredProperties: 'အထူးချွတ် အိမ်ခြံမြေများ',
-    viewAllListings: 'စာရင်းအားလုံးကြည့်ရန်',
-    beds: 'အိပ်ခန်း',
-    baths: 'ရေချိုခန်း',
-    sqft: 'စတုရန်းပေ',
-    viewDetails: 'အသေးစိတ်ကြည့်ရန်',
-    whyChooseUs: 'ဘာကြောင့် UrbanNest ကို ရွေးချယ်သင့်သလဲ',
-    featuresTitle: 'သင့်အိမ်အကောင်းဆုံးကို ရှာဖွေရန် လိုအပ်သမျှ',
-    signInTo: 'UrbanNest သို့ ဝင်ရောက်ပါ',
-    dontHaveAccount: 'အကောင့် မရှိသေးပါလား?',
-    createOneFree: 'အခမဲ့ ဖန်တီးပါ',
-    orContinueWith: 'သို့မဟုတ် email ဖြင့် ဆက်လက်ပါ',
-    emailAddress: 'အီးမေးလ်',
-    password: 'စကားဝှက်',
-    forgotPassword: 'စကားဝှက် မေ့နေပါသလား?',
-    rememberMe: 'ရက် ၃၀ အတွက် မှတ်ထားပါ',
-    termsAndPrivacy: 'ဝင်ရောက်ခြင်းဖြင့် သင်သည်',
-    terms: 'စည်းမျဉ်းများ',
-    and: 'နှင့်',
-    privacyPolicy: 'ကိုယ်ရေးမူဝါဒကို သဘောတူပါသည်။',
-    quickDemoLogin: 'အမြန် demo ဝင်ရောက်မှု',
-    createYourAccount: 'သင့်အကောင့်ကို ဖန်တီးပါ',
-    alreadyHaveOne: 'ရှိပြီးသားလား?',
-    iWantToBuyRent: 'ဝယ်/ငှား လိုပါသည်',
-    iWantToSellList: 'ရောင်း/စာရင်းတင် လိုပါသည်',
-    firstName: 'နာမည်',
-    lastName: 'အမည်နောက်ဆက်တွဲ',
-    confirmPassword: 'စကားဝှက် အတည်ပြုပါ',
-    minChars: 'အနည်းဆုံး စာလုံး ၈ လုံး',
-    repeatPassword: 'စကားဝှက် ထပ်ရေးပါ',
-    agreeTo: 'UrbanNest ၏',
-    termsOfService: 'ဝန်ဆောင်မှု စည်းမျဉ်းများ',
-    privacyPolicyLink: 'ကိုယ်ရေးမူဝါဒကို သဘောတူပါသည်။',
-    createAccount: 'အကောင့်ဖန်တီးပါ',
-    totalPosted: 'စုစုပေါင်း တင်ထားသည်',
-    activeListingsTab: 'လက်ရှိ စာရင်း',
-    pending: 'စောင့်ဆိုင်းနေသည်',
-    rejected: 'ငြင်းဆိုထားသည်',
-    myProperties: 'ကျွန်ုပ်၏ အိမ်ခြံမြေများ',
-    savedFavorites: 'သိမ်းဆည်းထားသည်',
-    noProperties: 'အိမ်ခြံမြေ မရှိသေးပါ',
-    addFirstProperty: 'သင့်ပထမဆုံး အိမ်ခြံမြေကို ထည့်ပါ',
-    noFavorites: 'သိမ်းဆည်းထားခြင်း မရှိသေးပါ',
-    browseProperties: 'အိမ်ခြံမြေများ ကြည့်ရန်',
-    listedBy: 'စာရင်းတင်သူ',
-    verifiedAgent: 'အတည်ပြုထားသည့် Agent',
-    scheduleViewing: 'ကြည့်ရန် ချိတ်ဆက်ပါ',
-    mortgageEstimate: 'အိမ်ခြံမြေ ချေးငွေ ခန့်မှန်းချက်',
-    mortgageSubtitle: '၃၀-နှစ် ရည်မှန်းချက် ၆.၈% APR၊ ၂၀% ဖြည့်',
-    perMonth: '/လ',
-    estimateDisclaimer: '* ခန့်မှန်းချက်သာ။ တိကျသည့် စည်းကမ်းချက်များအတွက် ချေးငွေလက်ခံသူကို ဆက်သွယ်ပါ။',
-    shareThisProperty: 'ဤအိမ်ခြံမြေကို မျှဝေပါ',
-    copyLink: 'လင့်ခ် ကူးယူပါ',
-    email: 'အီးမေးလ်',
-    save: 'သိမ်းဆည်းပါ',
-    aboutThisProperty: 'ဤအိမ်ခြံမြေအကြောင်း',
-    similarProperties: 'ဆင်တူသည့် အိမ်ခြံမြေများ',
-    overview: 'အနှစ်ချုပ်',
-    features: 'လုပ်ဆောင်ချက်များ',
-    contact: 'ဆက်သွယ်ရန်',
-    built: 'ဆောက်လုပ်ပြီး',
-    area: 'ဧရိယာ',
-    parking: 'ကားရပ်နားရန်',
-    cars: 'ကား',
-    contactOwner: 'ပိုင်ရှင်ကို ဆက်သွယ်ပါ',
-    callOwner: 'ပိုင်ရှင်ကို ဖုန်းခေါ်ပါ',
-    chatOnViber: 'Viber တွင် စကားပြောပါ',
-    signInToContact: 'ပိုင်ရှင်ကို ဆက်သွယ်ရန် ဝင်ရောက်ပါ',
-    addNewProperty: 'အိမ်ခြံမြေအသစ် ထည့်ပါ',
-    editProperty: 'အိမ်ခြံမြေ ပြင်ဆင်ပါ',
-    fillDetails: 'သင့်အိမ်ခြံမြေကို စာရင်းတင်ရန် အသေးစိတ်ဖြည့်ပါ',
-    propertyInfo: 'အိမ်ခြံမြေ အချက်အလက်',
-    basicDetails: 'အခြေခံ အသေးစိတ်',
-    specifications: 'သတ်မှတ်ချက်များ',
-    sizeAndLayout: 'အရွယ်အစားနှင့် အပြင်အဆင်',
-    description: 'ဖော်ပြချက်',
-    tellUsMore: 'ပိုမိုပြောပြပါ',
-    media: 'မီဒီယာ',
-    uploadPhotos: 'ဓာတ်ပုံများ တင်ပါ',
-    propertyTitle: 'အိမ်ခြံမြေ ခေါင်းစဉ်',
-    listingType: 'စာရင်းအမျိုးအစား',
-    forSale: 'ရောင်းရန်',
-    forRent: 'ငှားရန်',
-    price: 'စျေးနှုန်း (MMK)',
-    township: 'မြို့နယ်',
-    selectLocation: 'တည်နေရာ ရွေးပါ',
-    sqftLabel: 'စတုရန်းပေ',
-    address: 'လိပ်စာ',
-    fullAddress: 'အိမ်ခြံမြေ လိပ်စာ အပြည့်အစုံ',
-    descriptionLabel: 'ဖော်ပြချက်',
-    descPlaceholder: 'သင့်အိမ်ခြံမြေကို အသေးစိတ် ဖော်ပြပါ...',
-    featuresLabel: 'လုပ်ဆောင်ချက်များနှင့် အဆင်ပြေမှုများ',
-    dragDrop: 'သင့်ဓာတ်ပုံများကို ဒီမှာ ဆွဲထည့်ပါ',
-    orClickToBrowse: 'သို့မဟုတ် ကြည့်ရန် နှိပ်ပါ',
-    chooseFiles: 'ဖိုင်များ ရွေးပါ',
-    uploadAtLeast: 'အနည်းဆုံး ဓာတ်ပုံ ၁ ပုံ တင်ပါ။ အကြံပြုအရွယ်အစား- 1200x800px',
-    previous: 'နောက်သို့',
-    next: 'ရှေ့သို့',
-    submitForApproval: 'အတည်ပြုချက်အတွက် တင်သွင်းပါ',
-    propertySubmitted: 'အိမ်ခြံမြေ တင်သွင်းပြီးပါပြီ!',
-    submittedDesc: 'သင့်အိမ်ခြံမြေကို အတည်ပြုချက်အတွက် တင်သွင်းပြီးပါပြီ။',
-    redirecting: 'ဒက်ရှ်ဘုတ်သို့ ပြန်ညွှန်နေပါသည်...',
-    adminDashboard: 'Admin ဒက်ရှ်ဘုတ်',
-    totalUsers: 'စုစုပေါင်း အသုံးပြုသူ',
-    totalProperties: 'စုစုပေါင်း အိမ်ခြံမြေ',
-    pendingApprovals: 'စောင့်ဆိုင်းနေသည့် အတည်ပြုချက်',
-    manageData: 'ဒေတာ စီမံပါ',
-    approve: 'အတည်ပြုပါ',
-    reject: 'ငြင်းဆိုပါ',
-    featuresAmenities: 'လုပ်ဆောင်ချက်များနှင့် အဆင်ပြေမှုများ',
-  },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language] = useState('en');
+  const language = 'en';
 
   useEffect(() => {
-    localStorage.removeItem('urbannest-language');
     document.documentElement.lang = 'en';
   }, []);
 
@@ -293,12 +160,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return value || key;
   };
 
-  const toggleLanguage = () => {
-    // no-op: language switcher removed
-  };
-
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: () => {}, t, toggleLanguage }}>
+    <LanguageContext.Provider value={{ language, setLanguage: () => {}, t, toggleLanguage: () => {} }}>
       {children}
     </LanguageContext.Provider>
   );
