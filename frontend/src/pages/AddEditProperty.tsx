@@ -5,7 +5,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS, FEATURES_EN, FEATURES_MY } from '../data/myanmarProperties';
-import { resolvePropertyTownship } from '../utils/township';
 import type { OwnershipType, Property, PropertyRequest, PropertyType, SaleStatus, User } from '../types';
 
 const PROPERTY_TYPES: { value: PropertyType; labelEn: string; labelMy: string }[] = [
@@ -90,8 +89,26 @@ const INITIAL_FORM: FormData = {
   roadWidth: '',
 };
 
+function findTownship(value?: string | null) {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  return YANGON_TOWNSHIPS.find((township) =>
+    township.id.toLowerCase() === normalized
+    || township.nameEn.toLowerCase() === normalized
+    || township.nameMy === value.trim()
+  );
+}
+
+function findTownshipFromLocation(location: string) {
+  const normalized = location.toLowerCase();
+  return YANGON_TOWNSHIPS.find((township) =>
+    normalized.includes(township.nameEn.toLowerCase())
+    || location.includes(township.nameMy)
+  );
+}
+
 function formFromProperty(p: Property, user: User | null): FormData {
-  const tw = resolvePropertyTownship(p);
+  const tw = findTownship(p.township) ?? findTownshipFromLocation(p.location);
   return {
     title: p.title,
     propertyType: p.propertyType,
@@ -255,7 +272,7 @@ export function AddEditProperty() {
 
     try {
       const originalTownship = existing
-        ? resolvePropertyTownship(existing)
+        ? findTownship(existing.township) ?? findTownshipFromLocation(existing.location)
         : undefined;
       const originalStreetAddress = existing?.streetAddress?.trim() || existing?.location;
       const locationUnchanged = existing

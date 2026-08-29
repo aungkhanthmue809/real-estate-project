@@ -1,20 +1,13 @@
-import { useEffect, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Bed, Bath, Square, Heart, ArrowRight, Compass, Bell, Home as HomeIcon, ChevronDown, Building2, Landmark } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS } from '../data/myanmarProperties';
-import { filterProperties, parseOptionalPrice } from '../utils/propertyFilters';
-import type { Property, PropertyType } from '../types';
+import type { Property } from '../types';
 
-const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
-  { value: 'APARTMENT', label: 'Apartment' },
-  { value: 'HOUSE', label: 'House' },
-  { value: 'CONDO', label: 'Condo' },
-  { value: 'TOWNHOUSE', label: 'Townhouse' },
-  { value: 'LAND', label: 'Land' },
-];
+const PROPERTY_TYPES = ['Apartment', 'House', 'Condo', 'Townhouse', 'Land'];
 
 const formatMMK = (value: number) => {
   if (value >= 1000000000) return `${(value / 1000000000).toFixed(1).replace(/\.0$/, '')}B MMK`;
@@ -95,83 +88,46 @@ function PropertyCard({ property, language }: { property: Property; language: st
 }
 
 export function Home() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const { properties, loading, error } = useProperties();
-  const rawListing = searchParams.get('listing');
-  const rawTown = searchParams.get('town');
-  const rawPropertyType = searchParams.get('propertyType');
-  const rawMinPrice = searchParams.get('minPrice');
-  const rawMaxPrice = searchParams.get('maxPrice');
-  const listingType: 'buy' | 'rent' = rawListing === 'rent' ? 'rent' : 'buy';
-  const selectedTown = YANGON_TOWNSHIPS.some((township) => township.id === rawTown) ? rawTown ?? '' : '';
-  const propertyType = PROPERTY_TYPES.some((type) => type.value === rawPropertyType)
-    ? rawPropertyType as PropertyType
-    : '';
-  const minPriceValue = parseOptionalPrice(rawMinPrice);
-  const maxPriceValue = parseOptionalPrice(rawMaxPrice);
-  const minPrice = minPriceValue === undefined ? '' : rawMinPrice ?? '';
-  const maxPrice = maxPriceValue === undefined ? '' : rawMaxPrice ?? '';
-  const searchQuery = searchParams.get('q') ?? '';
+  const [listingType, setListingType] = useState('buy');
+  const [selectedTown, setSelectedTown] = useState('');
+  const [propertyType, setPropertyType] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const next = new URLSearchParams(searchParams);
-    let changed = false;
-    const remove = (key: string) => {
-      if (next.has(key)) {
-        next.delete(key);
-        changed = true;
-      }
-    };
-
-    if (rawListing !== null && rawListing !== 'buy' && rawListing !== 'rent') remove('listing');
-    if (rawTown !== null && !YANGON_TOWNSHIPS.some((township) => township.id === rawTown)) remove('town');
-    if (rawPropertyType !== null && !PROPERTY_TYPES.some((type) => type.value === rawPropertyType)) remove('propertyType');
-    if (rawMinPrice !== null && (!rawMinPrice.trim() || minPriceValue === undefined)) remove('minPrice');
-    if (rawMaxPrice !== null && (!rawMaxPrice.trim() || maxPriceValue === undefined)) remove('maxPrice');
-    if (!searchQuery.trim()) remove('q');
-    remove('type');
-    remove('min');
-    remove('max');
-
-    if (changed) setSearchParams(next, { replace: true });
-  }, [
-    maxPriceValue,
-    minPriceValue,
-    rawListing,
-    rawMaxPrice,
-    rawMinPrice,
-    rawPropertyType,
-    rawTown,
-    searchParams,
-    searchQuery,
-    setSearchParams,
-  ]);
-
-  const updateFilter = (key: string, value: string, replace = false) => {
-    const next = new URLSearchParams(searchParams);
-    if (value.trim()) next.set(key, value);
-    else next.delete(key);
-    setSearchParams(next, { replace });
+  const handleListingTypeChange = (type: 'buy' | 'rent') => {
+    setListingType(type);
+    setMinPrice('');
+    setMaxPrice('');
   };
 
-  const clearOptionalFilters = () => {
-    const next = new URLSearchParams(searchParams);
-    ['q', 'town', 'propertyType', 'minPrice', 'maxPrice'].forEach((key) => next.delete(key));
-    setSearchParams(next);
-  };
+  const filteredProperties = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const expectedStatus = listingType === 'rent' ? 'FOR_RENT' : 'FOR_SALE';
+    const selectedTownship = YANGON_TOWNSHIPS.find((town) => town.nameEn === selectedTown);
 
-  const filteredProperties = useMemo(() => filterProperties(properties, {
-    listing: listingType,
-    town: selectedTown,
-    propertyType,
-    minPrice: minPriceValue,
-    maxPrice: maxPriceValue,
-    query: searchQuery,
-  }), [properties, searchQuery, listingType, selectedTown, propertyType, minPriceValue, maxPriceValue]);
+    return properties.filter((property) => {
+      const matchesKeyword = !query || [property.title, property.description, property.location, property.propertyType]
+        .some((value) => value.toLowerCase().includes(query));
+      const matchesStatus = property.status === expectedStatus;
+      const location = property.location.toLowerCase();
+      const matchesTown = !selectedTown || !selectedTownship
+        || location.includes(selectedTownship.nameEn.toLowerCase())
+        || location.includes(selectedTownship.nameMy.toLowerCase());
+      const matchesType = !propertyType || property.propertyType === propertyType.toUpperCase();
+      const min = minPrice ? Number(minPrice) : 0;
+      const max = maxPrice ? Number(maxPrice) : Infinity;
+      const matchesPrice = property.price >= min && property.price <= max;
+      return matchesKeyword && matchesStatus && matchesTown && matchesType && matchesPrice;
+    });
+  }, [properties, searchQuery, listingType, selectedTown, propertyType, minPrice, maxPrice]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    navigate(`/?q=${searchQuery}&listing=${listingType}&town=${selectedTown}&type=${propertyType}&min=${minPrice}&max=${maxPrice}`);
   };
 
   const renderTown = (town: { nameEn: string; nameMy: string }) => (language === 'my' ? town.nameMy : town.nameEn);
@@ -192,12 +148,12 @@ export function Home() {
           </p>
           <form onSubmit={handleSearch} className="search-box">
             <div className="search-toggle">
-              <button type="button" onClick={() => updateFilter('listing', 'buy')} className={`search-toggle-btn ${listingType === 'buy' ? 'active' : ''}`}>Buy</button>
-              <button type="button" onClick={() => updateFilter('listing', 'rent')} className={`search-toggle-btn ${listingType === 'rent' ? 'active' : ''}`}>Rent</button>
+              <button type="button" onClick={() => handleListingTypeChange('buy')} className={`search-toggle-btn ${listingType === 'buy' ? 'active' : ''}`}>Buy</button>
+              <button type="button" onClick={() => handleListingTypeChange('rent')} className={`search-toggle-btn ${listingType === 'rent' ? 'active' : ''}`}>Rent</button>
             </div>
             <div className="search-input-row">
               <MapPin className="search-input-icon w-5 h-5" />
-              <input type="text" placeholder="City, neighborhood, or ZIP code" value={searchQuery} onChange={(e) => updateFilter('q', e.target.value, true)} />
+              <input type="text" placeholder="City, neighborhood, or ZIP code" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               <button type="submit" className="search-btn">Search Homes</button>
             </div>
             <div className="search-filters">
@@ -208,11 +164,11 @@ export function Home() {
                   <select
                     className="search-select"
                     value={selectedTown}
-                    onChange={(e) => updateFilter('town', e.target.value)}
+                    onChange={(e) => setSelectedTown(e.target.value)}
                   >
                     <option value="">All Townships</option>
 {YANGON_TOWNSHIPS.map((town) => (
-                      <option key={town.id} value={town.id}>
+                      <option key={town.id} value={town.nameEn}>
                         {renderTown(town)}
                       </option>
                     ))}
@@ -227,11 +183,11 @@ export function Home() {
                   <select
                     className="search-select"
                     value={propertyType}
-                    onChange={(e) => updateFilter('propertyType', e.target.value)}
+                    onChange={(e) => setPropertyType(e.target.value)}
                   >
                     <option value="">All Types</option>
                     {PROPERTY_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
+                      <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
                   <ChevronDown className="search-select-chevron" />
@@ -249,7 +205,7 @@ export function Home() {
                       className="search-price-input"
                       placeholder="Min"
                       value={minPrice}
-                      onChange={(e) => updateFilter('minPrice', e.target.value, true)}
+                      onChange={(e) => setMinPrice(e.target.value)}
                     />
                     <span className="search-price-suffix">MMK</span>
                   </div>
@@ -261,7 +217,7 @@ export function Home() {
                       className="search-price-input"
                       placeholder="Max"
                       value={maxPrice}
-                      onChange={(e) => updateFilter('maxPrice', e.target.value, true)}
+                      onChange={(e) => setMaxPrice(e.target.value)}
                     />
                     <span className="search-price-suffix">MMK</span>
                   </div>
@@ -270,7 +226,7 @@ export function Home() {
             </div>
             <div className="search-locations">
               {YANGON_TOWNSHIPS.slice(0, 4).map((town) => (
-                <button key={town.id} type="button" onClick={() => updateFilter('town', town.id)} className={`search-location-tag ${selectedTown === town.id ? 'active' : ''}`}>
+                <button key={town.id} type="button" onClick={() => setSelectedTown(town.nameEn)} className={`search-location-tag ${selectedTown === town.nameEn ? 'active' : ''}`}>
                   {language === 'my' ? town.nameMy : town.nameEn}
                 </button>
               ))}
@@ -331,7 +287,7 @@ export function Home() {
             <button
               type="button"
               className="no-results-btn"
-              onClick={clearOptionalFilters}
+              onClick={() => { setSelectedTown(''); setPropertyType(''); setMinPrice(''); setMaxPrice(''); }}
             >
               {language === 'my' ? 'စစ်ထုတ်မှုများ ရှင်းပါ' : 'Clear Filters'}
             </button>
@@ -391,8 +347,8 @@ export function Home() {
             <div>
               <h4 className="footer-col-title">Explore</h4>
               <ul className="footer-links">
-                <li className="footer-link"><Link to="/?listing=buy">Buy a Home</Link></li>
-                <li className="footer-link"><Link to="/?listing=rent">Rent a Home</Link></li>
+                <li className="footer-link"><Link to="/?type=buy">Buy a Home</Link></li>
+                <li className="footer-link"><Link to="/?type=rent">Rent a Home</Link></li>
                 <li className="footer-link"><Link to="/">New Listings</Link></li>
               </ul>
             </div>

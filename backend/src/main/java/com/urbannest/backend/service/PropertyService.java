@@ -7,11 +7,8 @@ import com.urbannest.backend.repository.PropertyRepository;
 import com.urbannest.backend.repository.UserRepository;
 import com.urbannest.backend.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -41,23 +38,7 @@ public class PropertyService {
     public PropertyResponse getPropertyById(Long id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
-        if (property.getApprovalStatus() != ApprovalStatus.APPROVED && !canViewUnapprovedProperty(property)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
-        }
         return toResponse(property);
-    }
-
-    private boolean canViewUnapprovedProperty(Property property) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            return false;
-        }
-
-        boolean isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
-        return isAdmin || property.getOwner().getId().equals(userDetails.getId());
     }
 
     public List<PropertyResponse> getMyProperties() {

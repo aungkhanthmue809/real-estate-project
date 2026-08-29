@@ -1,30 +1,6 @@
 export const YANGON_TOWNSHIPS = [
   { id: 'bahan', nameEn: 'Bahan', nameMy: 'ဗဟန်း' },
   { id: 'dagon', nameEn: 'Dagon', nameMy: 'ဒဂုံ' },
-  {
-    id: 'north-dagon',
-    nameEn: 'North Dagon',
-    nameMy: 'မြောက်ဒဂုံ',
-    aliases: ['North Dagon Township', 'Dagon Myothit (North)', 'ဒဂုံမြို့သစ်(မြောက်ပိုင်း)'],
-  },
-  {
-    id: 'south-dagon',
-    nameEn: 'South Dagon',
-    nameMy: 'တောင်ဒဂုံ',
-    aliases: ['South Dagon Township', 'Dagon Myothit (South)', 'ဒဂုံမြို့သစ်(တောင်ပိုင်း)'],
-  },
-  {
-    id: 'east-dagon',
-    nameEn: 'East Dagon',
-    nameMy: 'အရှေ့ဒဂုံ',
-    aliases: ['East Dagon Township', 'Dagon Myothit (East)', 'ဒဂုံမြို့သစ်(အရှေ့ပိုင်း)'],
-  },
-  {
-    id: 'dagon-seikkan',
-    nameEn: 'Dagon Seikkan',
-    nameMy: 'ဒဂုံဆိပ်ကမ်း',
-    aliases: ['Dagon Seikkan Township', 'ဒဂုံဆိပ်ကမ်းမြို့နယ်'],
-  },
   { id: 'kamaryut', nameEn: 'Kamaryut', nameMy: 'ကမာရွတ်' },
   { id: 'mayangone', nameEn: 'Mayangone', nameMy: 'မရမ်းကုန်း' },
   { id: 'hlaing', nameEn: 'Hlaing', nameMy: 'လှိုင်' },
@@ -32,6 +8,7 @@ export const YANGON_TOWNSHIPS = [
   { id: 'sein', nameEn: 'Sein Pann', nameMy: 'စိန်ပန်း' },
   { id: 'sanpya', nameEn: 'San Pya', nameMy: 'စံပြ' },
   { id: 'tamwe', nameEn: 'Tamwe', nameMy: 'တာမွေ' },
+  { id: 'dagon-seikkan', nameEn: 'Dagon Seikkan', nameMy: 'ဒဂုံဆိပ်ကမ်း' },
   { id: 'north-okkalapa', nameEn: 'North Okkalapa', nameMy: 'မြောက်ဥက္ကလာပ' },
   { id: 'south-okkalapa', nameEn: 'South Okkalapa', nameMy: 'တောင်ဥက္ကလာပ' },
   { id: 'thaketa', nameEn: 'Thaketa', nameMy: 'သာကေတ' },

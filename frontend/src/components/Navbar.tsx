@@ -21,8 +21,8 @@ export function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/?listing=buy" className="navbar-link">Buy</Link>
-          <Link to="/?listing=rent" className="navbar-link">Rent</Link>
+          <Link to="/?type=buy" className="navbar-link">Buy</Link>
+          <Link to="/?type=rent" className="navbar-link">Rent</Link>
           <Link to="/about" className="navbar-link">About</Link>
           <Link to="/contact" className="navbar-link">Contact</Link>
         </div>
@@ -71,10 +71,10 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu active">
-          <Link to="/?listing=buy" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+          <Link to="/?type=buy" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> Buy
           </Link>
-          <Link to="/?listing=rent" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+          <Link to="/?type=rent" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> Rent
           </Link>
           <Link to="/about" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
