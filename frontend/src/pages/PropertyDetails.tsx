@@ -4,7 +4,6 @@ import { Heart, MapPin, Bed, Bath, Square, Phone, Copy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
-import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import type { Property } from '../types';
 
 const formatType = (propertyType: Property['propertyType']) =>
@@ -118,7 +117,7 @@ export function PropertyDetails() {
             <div className="detail-gallery">
               <span className={`detail-badge ${property.status === 'FOR_SALE' ? 'sale' : 'rent'}`}>{badge}</span>
               <img
-                src={resolvePropertyImageUrl(property.imageUrl)}
+                src={property.imageUrl?.startsWith('http') ? property.imageUrl : '/property-placeholder.svg'}
                 alt={property.title}
                 className="detail-main-image"
                 onError={(event) => {
@@ -220,7 +219,7 @@ export function PropertyDetails() {
                 <Link key={similar.id} to={`/property/${similar.id}`} style={{ textDecoration: 'none' }}>
                   <div className="home-card">
                     <div className="home-card-img-wrap">
-                      <img src={resolvePropertyImageUrl(similar.imageUrl)} alt={similar.title} className="home-card-img" />
+                      <img src={similar.imageUrl} alt={similar.title} className="home-card-img" />
                       <span className={`home-card-badge ${similar.status === 'FOR_SALE' ? 'sale' : 'rent'}`}>
                         {similar.status === 'FOR_RENT' ? 'For Rent' : 'For Sale'}
                       </span>

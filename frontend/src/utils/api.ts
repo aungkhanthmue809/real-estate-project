@@ -1,9 +1,10 @@
 import axios from 'axios';
 import type { AuthResponse, Property, PropertyRequest, User } from '../types';
-import { BACKEND_BASE_URL } from './imageUrl';
+
+const API_BASE = 'http://localhost:8080';
 
 const api = axios.create({
-  baseURL: BACKEND_BASE_URL,
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -61,17 +62,6 @@ export const propertyAPI = {
   create: (data: PropertyRequest) => api.post<Property>('/api/properties', data),
   update: (id: number, data: PropertyRequest) => api.put<Property>(`/api/properties/${id}`, data),
   delete: (id: number) => api.delete<{ message: string }>(`/api/properties/${id}`),
-};
-
-export const uploadAPI = {
-  uploadPropertyImage: async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await api.post<{ url: string }>('/api/uploads/properties', formData, {
-      headers: { 'Content-Type': undefined },
-    });
-    return response.data.url;
-  },
 };
 
 export const adminAPI = {

@@ -2,7 +2,6 @@ package com.urbannest.backend.config;
 
 import com.urbannest.backend.security.JwtFilter;
 import com.urbannest.backend.security.CustomUserDetailsService;
-import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,16 +38,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/uploads/properties/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/users/me", "/api/users/me/password").authenticated()
                 .requestMatchers("/api/users", "/api/users/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/properties/mine").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/properties", "/api/properties/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/uploads/properties").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

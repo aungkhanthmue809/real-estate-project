@@ -4,8 +4,6 @@ import { ArrowLeft, ArrowRight, Check, X, MapPin, FileText, Home, Map, Camera, B
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS, FEATURES_EN } from '../data/myanmarProperties';
-import { uploadAPI } from '../utils/api';
-import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import { resolvePropertyTownship } from '../utils/township';
 import type { OwnershipType, Property, PropertyRequest, PropertyType, SaleStatus, User } from '../types';
 
@@ -125,15 +123,6 @@ function formFromProperty(p: Property, user: User | null): FormData {
   };
 }
 
-function getUploadErrorMessage(error: unknown): string {
-  const responseData = typeof error === 'object' && error !== null && 'response' in error
-    ? (error as { response?: { data?: { detail?: string; message?: string } } }).response?.data
-    : undefined;
-  return responseData?.detail
-    ?? responseData?.message
-    ?? (error instanceof Error ? error.message : 'Unable to upload image.');
-}
-
 export function AddEditProperty() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -146,7 +135,6 @@ export function AddEditProperty() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<FormData>(() =>
     existing
@@ -186,28 +174,6 @@ export function AddEditProperty() {
         ? formData.features.filter((item) => item !== feature)
         : [...formData.features, feature],
     });
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    setUploadingImage(true);
-    setErrors((current) => {
-      const remaining = { ...current };
-      delete remaining.imageUrl;
-      return remaining;
-    });
-
-    try {
-      const imageUrl = await uploadAPI.uploadPropertyImage(file);
-      setFormData((current) => ({ ...current, imageUrl }));
-    } catch (error) {
-      setErrors((current) => ({ ...current, imageUrl: getUploadErrorMessage(error) }));
-    } finally {
-      setUploadingImage(false);
-    }
   };
 
   const validateStep = (step: number): boolean => {
@@ -910,31 +876,14 @@ export function AddEditProperty() {
                         Photos & Review
                       </h2>
                       <p className="form-section-desc">
-                        Upload a main image and review your listing
+                        Add a main image URL and review your listing
                       </p>
                     </div>
                   </div>
 
                   <div className="form-field">
                     <label className="form-label">
-                      Upload Main Image
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="form-input"
-                      onChange={handleImageUpload}
-                      disabled={uploadingImage}
-                    />
-                    <p className="form-section-desc">
-                      JPEG, PNG, or WebP. Maximum file size: 5 MB.
-                    </p>
-                    {uploadingImage && <p className="form-section-desc">Uploading image...</p>}
-                  </div>
-
-                  <div className="form-field">
-                    <label className="form-label">
-                      Or Use an Image URL
+                      Main Image
                     </label>
                     <input
                       type="url"
@@ -945,14 +894,7 @@ export function AddEditProperty() {
                     />
                     {formData.imageUrl && (
                       <div className="image-preview">
-                        <img
-                          src={resolvePropertyImageUrl(formData.imageUrl)}
-                          alt="Preview"
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = '/property-placeholder.svg';
-                          }}
-                        />
+                        <img src={formData.imageUrl} alt="Preview" />
                         <button
                           type="button"
                           onClick={() => updateForm({ imageUrl: '' })}
@@ -1106,8 +1048,8 @@ export function AddEditProperty() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
-                <button type="button" onClick={handleSubmit} className="form-btn-submit" disabled={loading || uploadingImage || propertiesLoading || (isEditing && !existing)}>
-                  {loading || uploadingImage ? (
+                <button type="button" onClick={handleSubmit} className="form-btn-submit" disabled={loading || propertiesLoading || (isEditing && !existing)}>
+                  {loading ? (
                     <span className="auth-loading" />
                   ) : (
                     <>

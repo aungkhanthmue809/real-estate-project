@@ -21,7 +21,6 @@ import { useProperties } from '../contexts/PropertiesContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 import { NotificationsBell } from '../components/NotificationsBell';
 import { adminAPI } from '../utils/api';
-import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import type { Property } from '../types';
 
 const formatDate = (iso: string) => {
@@ -216,7 +215,7 @@ export function AdminDashboard() {
                           <tr key={property.id}>
                             <td>
                               <div className="adm-property-cell">
-                                <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
+                                <img src={property.imageUrl} alt="" className="adm-property-thumb" />
                                 <div className="adm-property-name">{property.title}</div>
                               </div>
                             </td>
@@ -258,7 +257,7 @@ export function AdminDashboard() {
                   <div className="admin-recent-list">
                     {approved.slice(0, 4).map((property) => (
                       <div className="admin-recent-item" key={property.id}>
-                        <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="admin-recent-thumb" />
+                        <img src={property.imageUrl} alt="" className="admin-recent-thumb" />
                         <div className="admin-recent-info">
                           <div className="admin-recent-name">{property.title}</div>
                           <div className="admin-recent-loc">
@@ -293,7 +292,7 @@ export function AdminDashboard() {
                       <tr key={property.id}>
                         <td>
                           <div className="adm-property-cell">
-                            <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
+                            <img src={property.imageUrl} alt="" className="adm-property-thumb" />
                             <div className="adm-property-name">{property.title}</div>
                           </div>
                         </td>
@@ -354,7 +353,7 @@ export function AdminDashboard() {
             </div>
             <div className="admin-review-body">
               {reviewing.imageUrl ? (
-                <img src={resolvePropertyImageUrl(reviewing.imageUrl)} alt={reviewing.title} className="admin-review-thumb" />
+                <img src={reviewing.imageUrl} alt={reviewing.title} className="admin-review-thumb" />
               ) : (
                 <div className="admin-review-thumb admin-review-thumb-fallback"><Home /></div>
               )}

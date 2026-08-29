@@ -6,7 +6,6 @@ import { useProperties } from '../contexts/PropertiesContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 import { NotificationsBell } from '../components/NotificationsBell';
 import { adminAPI } from '../utils/api';
-import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import type { Property, PropertyRequest, User } from '../types';
 
 const DEMO_USERS: User[] = [
@@ -310,7 +309,7 @@ export function AdminDataManagement() {
                             <td className="admin-cell-id">#{property.id}</td>
                             <td>
                               <div className="adm-property-cell">
-                                <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
+                                <img src={property.imageUrl} alt="" className="adm-property-thumb" />
                                 <div>
                                   <div className="adm-property-name">{property.title}</div>
                                   <div className="adm-property-loc">
