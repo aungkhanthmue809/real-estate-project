@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, X, FileText, Home, Map, Camera, Building2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, MapPin, FileText, Home, Map, Camera, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
-import { PropertyMap, type MapCoordinates } from '../components/PropertyMap';
 import { YANGON_TOWNSHIPS, FEATURES_EN } from '../data/myanmarProperties';
 import { uploadAPI } from '../utils/api';
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
@@ -29,7 +28,6 @@ const OWNERSHIP_TYPES: { value: OwnershipType; label: string }[] = [
 const BEDROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 const BATHROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 const PARKING_OPTIONS = [0, 1, 2, 3, 4, 5];
-const YANGON_DEFAULT_CENTER: MapCoordinates = [16.8409, 96.1735];
 
 interface FormData {
   title: string;
@@ -268,17 +266,6 @@ export function AddEditProperty() {
   }, [currentStep]);
 
   const selectedTownship = YANGON_TOWNSHIPS.find(tw => tw.id === formData.township);
-  const propertyPosition: MapCoordinates | null = formData.latitude !== null && formData.longitude !== null
-    ? [formData.latitude, formData.longitude]
-    : null;
-  const mapCenter: MapCoordinates = propertyPosition
-    ?? (selectedTownship
-      ? [selectedTownship.latitude, selectedTownship.longitude]
-      : YANGON_DEFAULT_CENTER);
-
-  const handleMapPositionChange = ([latitude, longitude]: MapCoordinates) => {
-    updateForm({ latitude, longitude });
-  };
 
   const handleSubmit = async () => {
     if (isEditing && !existing) {
@@ -769,29 +756,22 @@ export function AddEditProperty() {
                     {errors.streetAddress && <p className="form-error">{errors.streetAddress}</p>}
                   </div>
 
-                  <div className="property-map-section">
-                    <div className="property-map-heading">
-                      <div>
-                        <p className="property-map-title">Pin the property location</p>
-                        <p className="property-map-help">Click the map or drag the marker to set the exact location.</p>
-                      </div>
-                      <div className="property-map-coordinates" aria-live="polite">
-                        {propertyPosition ? (
-                          <>
-                            <span>Latitude: {propertyPosition[0].toFixed(6)}</span>
-                            <span>Longitude: {propertyPosition[1].toFixed(6)}</span>
-                          </>
-                        ) : (
-                          <span>Exact location not selected</span>
-                        )}
-                      </div>
+                  <div className="map-preview">
+                    <div className="map-preview-icon">
+                      <MapPin className="w-8 h-8" />
                     </div>
-                    <PropertyMap
-                      center={mapCenter}
-                      position={propertyPosition}
-                      editable
-                      onPositionChange={handleMapPositionChange}
-                    />
+                    <p className="map-preview-title">
+                      Map Preview
+                    </p>
+                    <p className="map-preview-desc">
+                      Enter your address above to pin the location
+                    </p>
+                    {formData.township && selectedTownship && (
+                      <div className="map-preview-badge">
+                        <MapPin className="w-4 h-4" />
+                        {selectedTownship.nameEn}, Yangon
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

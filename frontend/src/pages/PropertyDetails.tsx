@@ -4,7 +4,6 @@ import { Heart, MapPin, Bed, Bath, Square, Phone, Copy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
-import { PropertyMap, type MapCoordinates } from '../components/PropertyMap';
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import type { Property } from '../types';
 
@@ -102,12 +101,6 @@ export function PropertyDetails() {
   const similarProperties = properties
     .filter((candidate) => candidate.id !== property.id && candidate.propertyType === property.propertyType)
     .slice(0, 3);
-  const propertyPosition: MapCoordinates | null = typeof property.latitude === 'number'
-    && Number.isFinite(property.latitude)
-    && typeof property.longitude === 'number'
-    && Number.isFinite(property.longitude)
-    ? [property.latitude, property.longitude]
-    : null;
 
   return (
     <div className="property-detail-page">
@@ -191,15 +184,6 @@ export function PropertyDetails() {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            <div className="detail-location-section">
-              <h2 className="detail-section-title">Property Location</h2>
-              {propertyPosition ? (
-                <PropertyMap center={propertyPosition} position={propertyPosition} />
-              ) : (
-                <p className="detail-location-unavailable">Location not available</p>
               )}
             </div>
           </div>
