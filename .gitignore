@@ -42,8 +42,5 @@ backend/src/main/resources/application-local.properties
 hs_err_pid*.log
 replay_pid*.log
 
-### Database backups ###
-*.backup
-
 ### TypeScript build artifacts ###
 *.tsbuildinfo
