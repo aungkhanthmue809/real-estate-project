@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS, FEATURES_EN, FEATURES_MY } from '../data/myanmarProperties';
-import type { OwnershipType, Property, PropertyRequest, PropertyType, SaleStatus, User } from '../types';
+import type { Property, PropertyRequest, PropertyType, SaleStatus, User } from '../types';
 
 const PROPERTY_TYPES: { value: PropertyType; labelEn: string; labelMy: string }[] = [
   { value: 'APARTMENT', labelEn: 'Apartment', labelMy: 'အခန်း' },
@@ -15,7 +15,7 @@ const PROPERTY_TYPES: { value: PropertyType; labelEn: string; labelMy: string }[
   { value: 'TOWNHOUSE', labelEn: 'Townhouse', labelMy: 'တိုက်ခန်း' },
 ];
 
-const OWNERSHIP_TYPES: { value: OwnershipType; labelEn: string; labelMy: string }[] = [
+const OWNERSHIP_TYPES = [
   { value: 'FREEHOLD', labelEn: 'Freehold', labelMy: 'အမြဲတမ်းပိုင်ဆိုင်မှု' },
   { value: 'LEASEHOLD', labelEn: 'Leasehold', labelMy: 'ဌာနခွဲပိုင်ဆိုင်မှု' },
   { value: 'GOVERNMENT', labelEn: 'Government Grant', labelMy: 'အစိုးရ ခွင့်ပြုချက်' },
@@ -34,7 +34,7 @@ interface FormData {
   price: string;
   bedrooms: number;
   bathrooms: number;
-  parking: number | '';
+  parking: number;
   yearBuilt: string;
   area: string;
   streetAddress: string;
@@ -46,13 +46,11 @@ interface FormData {
   features: string[];
   imageUrl: string;
   additionalImages: string[];
-  ownershipType: OwnershipType | '';
+  ownershipType: string;
   contactPhone: string;
   contactEmail: string;
   hasGrant: boolean;
   hasPermit: boolean;
-  latitude: number | null;
-  longitude: number | null;
   plotDimension: string;
   landShape: string;
   roadWidth: string;
@@ -82,33 +80,13 @@ const INITIAL_FORM: FormData = {
   contactEmail: '',
   hasGrant: false,
   hasPermit: false,
-  latitude: null,
-  longitude: null,
   plotDimension: '',
   landShape: '',
   roadWidth: '',
 };
 
-function findTownship(value?: string | null) {
-  if (!value) return undefined;
-  const normalized = value.trim().toLowerCase();
-  return YANGON_TOWNSHIPS.find((township) =>
-    township.id.toLowerCase() === normalized
-    || township.nameEn.toLowerCase() === normalized
-    || township.nameMy === value.trim()
-  );
-}
-
-function findTownshipFromLocation(location: string) {
-  const normalized = location.toLowerCase();
-  return YANGON_TOWNSHIPS.find((township) =>
-    normalized.includes(township.nameEn.toLowerCase())
-    || location.includes(township.nameMy)
-  );
-}
-
 function formFromProperty(p: Property, user: User | null): FormData {
-  const tw = findTownship(p.township) ?? findTownshipFromLocation(p.location);
+  const tw = YANGON_TOWNSHIPS.find(t => p.location.toLowerCase().includes(t.nameEn.toLowerCase()));
   return {
     title: p.title,
     propertyType: p.propertyType,
@@ -116,25 +94,23 @@ function formFromProperty(p: Property, user: User | null): FormData {
     price: String(p.price),
     bedrooms: p.bedrooms,
     bathrooms: p.bathrooms,
-    parking: p.parking ?? '',
-    yearBuilt: p.yearBuilt == null ? '' : String(p.yearBuilt),
+    parking: 1,
+    yearBuilt: '',
     area: String(p.area),
-    streetAddress: p.streetAddress?.trim() ? p.streetAddress : p.location,
-    city: p.city ?? 'Yangon',
-    state: p.stateRegion ?? 'Yangon Region',
-    zipCode: p.zipCode ?? '',
+    streetAddress: p.location,
+    city: 'Yangon',
+    state: 'Yangon Region',
+    zipCode: '',
     township: tw ? tw.id : '',
     description: p.description,
-    features: [...(p.features ?? [])],
-    imageUrl: p.imageUrl ?? '',
+    features: [],
+    imageUrl: p.imageUrl,
     additionalImages: [],
-    ownershipType: p.ownershipType ?? '',
+    ownershipType: '',
     contactPhone: p.ownerPhone || user?.phone || '',
     contactEmail: user?.email || '',
-    hasGrant: p.hasGrant ?? false,
-    hasPermit: p.hasPermit ?? false,
-    latitude: p.latitude ?? null,
-    longitude: p.longitude ?? null,
+    hasGrant: false,
+    hasPermit: false,
     plotDimension: '',
     landShape: '',
     roadWidth: '',
@@ -187,14 +163,6 @@ export function AddEditProperty() {
     setErrors({});
   };
 
-  const toggleFeature = (feature: string) => {
-    updateForm({
-      features: formData.features.includes(feature)
-        ? formData.features.filter((item) => item !== feature)
-        : [...formData.features, feature],
-    });
-  };
-
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -203,12 +171,6 @@ export function AddEditProperty() {
       if (!formData.propertyType) newErrors.propertyType = language === 'my' ? 'အိမ်ခြံမြေ အမျိုးအစား ရွေးပါ' : 'Property type is required';
       if (!formData.price || Number(formData.price) <= 0) newErrors.price = language === 'my' ? 'စျေးနှုန်း ထည့်ပါ' : 'Price is required';
       if (!formData.area || Number(formData.area) <= 0) newErrors.area = language === 'my' ? 'အကျယ်အဝန်း ထည့်ပါ' : 'Area is required';
-      if (formData.yearBuilt) {
-        const year = Number(formData.yearBuilt);
-        if (!Number.isInteger(year) || year < 1900 || year > 2030) {
-          newErrors.yearBuilt = language === 'my' ? 'ဆောက်လုပ်သည့်နှစ်ကို 1900 နှင့် 2030 ကြား ထည့်ပါ' : 'Year built must be between 1900 and 2030';
-        }
-      }
     }
 
     if (step === 2) {
@@ -258,25 +220,15 @@ export function AddEditProperty() {
       return;
     }
 
-    if (formData.yearBuilt) {
-      const year = Number(formData.yearBuilt);
-      if (!Number.isInteger(year) || year < 1900 || year > 2030) {
-        setCurrentStep(1);
-        setErrors({ yearBuilt: language === 'my' ? 'ဆောက်လုပ်သည့်နှစ်ကို 1900 နှင့် 2030 ကြား ထည့်ပါ' : 'Year built must be between 1900 and 2030' });
-        return;
-      }
-    }
-
     setLoading(true);
     setErrors({});
 
     try {
       const originalTownship = existing
-        ? findTownship(existing.township) ?? findTownshipFromLocation(existing.location)
+        ? YANGON_TOWNSHIPS.find((township) => existing.location.toLowerCase().includes(township.nameEn.toLowerCase()))
         : undefined;
-      const originalStreetAddress = existing?.streetAddress?.trim() || existing?.location;
       const locationUnchanged = existing
-        && formData.streetAddress.trim() === originalStreetAddress
+        && formData.streetAddress.trim() === existing.location
         && formData.township === (originalTownship?.id ?? '');
       const location = locationUnchanged
         ? existing.location
@@ -291,19 +243,6 @@ export function AddEditProperty() {
         bedrooms: formData.bedrooms,
         bathrooms: formData.bathrooms,
         area: Number(formData.area) || 0,
-        parking: formData.parking === '' ? null : Number(formData.parking),
-        yearBuilt: formData.yearBuilt === '' ? null : Number(formData.yearBuilt),
-        ownershipType: formData.ownershipType || null,
-        streetAddress: formData.streetAddress.trim() || null,
-        township: selectedTownship?.nameEn ?? existing?.township ?? null,
-        city: formData.city.trim() || null,
-        stateRegion: formData.state.trim() || null,
-        zipCode: formData.zipCode.trim() || null,
-        hasGrant: formData.hasGrant,
-        hasPermit: formData.hasPermit,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        features: formData.features,
         imageUrl: formData.imageUrl,
       };
 
@@ -606,10 +545,9 @@ export function AddEditProperty() {
                           </label>
                           <select
                             value={formData.parking}
-                            onChange={(e) => updateForm({ parking: e.target.value === '' ? '' : Number(e.target.value) })}
+                            disabled
                             className="form-select"
                           >
-                            <option value="">{language === 'my' ? 'မသတ်မှတ်ရသေး' : 'Not specified'}</option>
                             {PARKING_OPTIONS.map((n) => (
                               <option key={n} value={n}>{n}</option>
                             ))}
@@ -622,13 +560,12 @@ export function AddEditProperty() {
                           <input
                             type="number"
                             value={formData.yearBuilt}
-                            onChange={(e) => updateForm({ yearBuilt: e.target.value })}
-                            className={`form-input ${errors.yearBuilt ? 'error' : ''}`}
+                            disabled
+                            className="form-input"
                             placeholder="2024"
                             min="1900"
                             max="2030"
                           />
-                          {errors.yearBuilt && <p className="form-error">{errors.yearBuilt}</p>}
                         </div>
                       </div>
 
@@ -666,6 +603,12 @@ export function AddEditProperty() {
                       </p>
                     </div>
                   </div>
+
+                  <p className="form-hint">
+                    {language === 'my'
+                      ? 'လက်ရှိ backend သည် လိပ်စာကို စာသားတစ်ခုအဖြစ်သာ သိမ်းဆည်းသည်။ မြို့၊ ပြည်နယ်/ဒေသနှင့် ZIP Code ကို သီးခြား မသိမ်းဆည်းနိုင်သေးပါ။'
+                      : 'The current backend stores one location value. City, state/region, and ZIP code are not persisted separately.'}
+                  </p>
 
                   <div className="form-grid-2">
                     <div className="form-field">
@@ -722,7 +665,7 @@ export function AddEditProperty() {
                       <input
                         type="text"
                         value={formData.zipCode}
-                        onChange={(e) => updateForm({ zipCode: e.target.value })}
+                        disabled
                         className="form-input"
                         placeholder="11181"
                       />
@@ -806,7 +749,7 @@ export function AddEditProperty() {
                     </label>
                     <select
                       value={formData.ownershipType}
-                      onChange={(e) => updateForm({ ownershipType: e.target.value as OwnershipType | '' })}
+                      disabled
                       className="form-select"
                     >
                       <option value="">{language === 'my' ? 'ပိုင်ဆိုင်မှု အမျိုးအစား ရွေးပါ' : 'Select Ownership Type'}</option>
@@ -816,6 +759,9 @@ export function AddEditProperty() {
                         </option>
                       ))}
                     </select>
+                    <p className="form-hint">
+                      {language === 'my' ? 'လက်ရှိ backend တွင် မသိမ်းဆည်းနိုင်သေးပါ။' : 'Not persisted by the current backend.'}
+                    </p>
                   </div>
 
                   <div className="form-field">
@@ -823,19 +769,16 @@ export function AddEditProperty() {
                       {language === 'my' ? 'လုပ်ဆောင်ချက်များ' : 'Property Features'}
                     </label>
                     <div className="feature-tags">
-                      {featureLabels.map((label, index) => {
-                        const feature = FEATURES_EN[index] ?? label;
-                        return (
-                          <button
-                            key={feature}
-                            type="button"
-                            onClick={() => toggleFeature(feature)}
-                            className={`feature-tag ${formData.features.includes(feature) ? 'active' : ''}`}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
+                      {featureLabels.map((feature, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          disabled
+                          className={`feature-tag ${formData.features.includes(feature) ? 'active' : ''}`}
+                        >
+                          {feature}
+                        </button>
+                      ))}
                     </div>
                     <p className="feature-count">
                       {formData.features.length} {language === 'my' ? 'လုပ်ဆောင်ချက် ရွေးချယ်ထားသည်' : 'features selected'}
@@ -850,7 +793,7 @@ export function AddEditProperty() {
                     <div className="docs-checks">
                       <button
                         type="button"
-                        onClick={() => updateForm({ hasGrant: !formData.hasGrant })}
+                        disabled
                         className={`doc-check ${formData.hasGrant ? 'is-checked' : ''}`}
                       >
                         <div className={`doc-checkbox ${formData.hasGrant ? 'checked' : ''}`}>
@@ -868,7 +811,7 @@ export function AddEditProperty() {
 
                       <button
                         type="button"
-                        onClick={() => updateForm({ hasPermit: !formData.hasPermit })}
+                        disabled
                         className={`doc-check ${formData.hasPermit ? 'is-checked' : ''}`}
                       >
                         <div className={`doc-checkbox ${formData.hasPermit ? 'checked' : ''}`}>

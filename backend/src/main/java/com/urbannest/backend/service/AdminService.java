@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -60,7 +59,6 @@ public class AdminService {
         property.setBathrooms(request.getBathrooms());
         property.setArea(request.getArea());
         property.setImageUrl(request.getImageUrl());
-        updateOptionalFields(property, request);
 
         property = propertyRepository.save(property);
         return toResponse(property);
@@ -87,39 +85,10 @@ public class AdminService {
                 .bedrooms(p.getBedrooms())
                 .bathrooms(p.getBathrooms())
                 .area(p.getArea())
-                .parking(p.getParking())
-                .yearBuilt(p.getYearBuilt())
-                .ownershipType(p.getOwnershipType())
-                .streetAddress(p.getStreetAddress())
-                .township(p.getTownship())
-                .city(p.getCity())
-                .stateRegion(p.getStateRegion())
-                .zipCode(p.getZipCode())
-                .hasGrant(p.getHasGrant())
-                .hasPermit(p.getHasPermit())
-                .latitude(p.getLatitude())
-                .longitude(p.getLongitude())
-                .features(p.getFeatures())
                 .imageUrl(p.getImageUrl())
                 .owner(p.getOwner().getUsername())
                 .ownerPhone(p.getOwner().getPhone())
                 .createdAt(p.getCreatedAt())
                 .build();
-    }
-
-    private void updateOptionalFields(Property property, PropertyRequest request) {
-        if (request.getParking() != null) property.setParking(request.getParking());
-        if (request.getYearBuilt() != null) property.setYearBuilt(request.getYearBuilt());
-        if (request.getOwnershipType() != null) property.setOwnershipType(request.getOwnershipType());
-        if (request.getStreetAddress() != null) property.setStreetAddress(request.getStreetAddress());
-        if (request.getTownship() != null) property.setTownship(request.getTownship());
-        if (request.getCity() != null) property.setCity(request.getCity());
-        if (request.getStateRegion() != null) property.setStateRegion(request.getStateRegion());
-        if (request.getZipCode() != null) property.setZipCode(request.getZipCode());
-        if (request.getHasGrant() != null) property.setHasGrant(request.getHasGrant());
-        if (request.getHasPermit() != null) property.setHasPermit(request.getHasPermit());
-        if (request.getLatitude() != null) property.setLatitude(request.getLatitude());
-        if (request.getLongitude() != null) property.setLongitude(request.getLongitude());
-        if (request.getFeatures() != null) property.setFeatures(new HashSet<>(request.getFeatures()));
     }
 }
