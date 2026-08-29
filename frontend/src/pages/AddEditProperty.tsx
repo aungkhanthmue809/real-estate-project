@@ -1,26 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, X, MapPin, FileText, Home, Map, Camera, Building2 } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
-import { YANGON_TOWNSHIPS, FEATURES_EN } from '../data/myanmarProperties';
+import { YANGON_TOWNSHIPS, FEATURES_EN, FEATURES_MY } from '../data/myanmarProperties';
 import { resolvePropertyTownship } from '../utils/township';
 import type { OwnershipType, Property, PropertyRequest, PropertyType, SaleStatus, User } from '../types';
 
-const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
-  { value: 'APARTMENT', label: 'Apartment' },
-  { value: 'HOUSE', label: 'House' },
-  { value: 'CONDO', label: 'Condo' },
-  { value: 'LAND', label: 'Land' },
-  { value: 'TOWNHOUSE', label: 'Townhouse' },
+const PROPERTY_TYPES: { value: PropertyType; labelEn: string; labelMy: string }[] = [
+  { value: 'APARTMENT', labelEn: 'Apartment', labelMy: 'အခန်း' },
+  { value: 'HOUSE', labelEn: 'House', labelMy: 'အိမ်' },
+  { value: 'CONDO', labelEn: 'Condo', labelMy: 'ကွန်ဒို' },
+  { value: 'LAND', labelEn: 'Land', labelMy: 'မြေ' },
+  { value: 'TOWNHOUSE', labelEn: 'Townhouse', labelMy: 'တိုက်ခန်း' },
 ];
 
-const OWNERSHIP_TYPES: { value: OwnershipType; label: string }[] = [
-  { value: 'FREEHOLD', label: 'Freehold' },
-  { value: 'LEASEHOLD', label: 'Leasehold' },
-  { value: 'GOVERNMENT', label: 'Government Grant' },
-  { value: 'PERMIT', label: 'Permit Land' },
-  { value: 'OTHER', label: 'Other' },
+const OWNERSHIP_TYPES: { value: OwnershipType; labelEn: string; labelMy: string }[] = [
+  { value: 'FREEHOLD', labelEn: 'Freehold', labelMy: 'အမြဲတမ်းပိုင်ဆိုင်မှု' },
+  { value: 'LEASEHOLD', labelEn: 'Leasehold', labelMy: 'ဌာနခွဲပိုင်ဆိုင်မှု' },
+  { value: 'GOVERNMENT', labelEn: 'Government Grant', labelMy: 'အစိုးရ ခွင့်ပြုချက်' },
+  { value: 'PERMIT', labelEn: 'Permit Land', labelMy: 'ခွင့်ပြုမြေ' },
+  { value: 'OTHER', labelEn: 'Other', labelMy: 'အခြား' },
 ];
 
 const BEDROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -126,6 +127,7 @@ function formFromProperty(p: Property, user: User | null): FormData {
 export function AddEditProperty() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user } = useAuth();
   const { myProperties, loading: propertiesLoading, addProperty, updateProperty } = useProperties();
   const existing = id ? myProperties.find((p) => String(p.id) === id) : undefined;
@@ -153,14 +155,14 @@ export function AddEditProperty() {
     }
   }, [existing, id, user]);
 
-  const featureLabels = FEATURES_EN;
+  const featureLabels = language === 'my' ? FEATURES_MY : FEATURES_EN;
   const isLand = formData.propertyType === 'LAND';
 
   const steps = [
-    { id: 1, label: 'Basic Info', icon: Home },
-    { id: 2, label: 'Location', icon: Map },
-    { id: 3, label: 'Details & Features', icon: FileText },
-    { id: 4, label: 'Photos & Review', icon: Camera },
+    { id: 1, label: language === 'my' ? 'အခြေခံ အချက်အလက်' : 'Basic Info', icon: Home },
+    { id: 2, label: language === 'my' ? 'တည်နေရာ' : 'Location', icon: Map },
+    { id: 3, label: language === 'my' ? 'အသေးစိတ်နှင့် လုပ်ဆောင်ချက်များ' : 'Details & Features', icon: FileText },
+    { id: 4, label: language === 'my' ? 'ဓာတ်ပုံနှင့် ပြန်လည်သုံးသပ်ခြင်း' : 'Photos & Review', icon: Camera },
   ];
 
   const updateForm = (updates: Partial<FormData>) => {
@@ -180,26 +182,26 @@ export function AddEditProperty() {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!formData.title.trim()) newErrors.title = 'Title is required';
-      if (!formData.propertyType) newErrors.propertyType = 'Property type is required';
-      if (!formData.price || Number(formData.price) <= 0) newErrors.price = 'Price is required';
-      if (!formData.area || Number(formData.area) <= 0) newErrors.area = 'Area is required';
+      if (!formData.title.trim()) newErrors.title = language === 'my' ? 'ခေါင်းစဉ် လိုအပ်သည်' : 'Title is required';
+      if (!formData.propertyType) newErrors.propertyType = language === 'my' ? 'အိမ်ခြံမြေ အမျိုးအစား ရွေးပါ' : 'Property type is required';
+      if (!formData.price || Number(formData.price) <= 0) newErrors.price = language === 'my' ? 'စျေးနှုန်း ထည့်ပါ' : 'Price is required';
+      if (!formData.area || Number(formData.area) <= 0) newErrors.area = language === 'my' ? 'အကျယ်အဝန်း ထည့်ပါ' : 'Area is required';
       if (formData.yearBuilt) {
         const year = Number(formData.yearBuilt);
         if (!Number.isInteger(year) || year < 1900 || year > 2030) {
-          newErrors.yearBuilt = 'Year built must be between 1900 and 2030';
+          newErrors.yearBuilt = language === 'my' ? 'ဆောက်လုပ်သည့်နှစ်ကို 1900 နှင့် 2030 ကြား ထည့်ပါ' : 'Year built must be between 1900 and 2030';
         }
       }
     }
 
     if (step === 2) {
-      if (!formData.township && !existing) newErrors.township = 'Township is required';
-      if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Street address is required';
+      if (!formData.township && !existing) newErrors.township = language === 'my' ? 'မြို့နယ် ရွေးပါ' : 'Township is required';
+      if (!formData.streetAddress.trim()) newErrors.streetAddress = language === 'my' ? 'လိပ်စာ ထည့်ပါ' : 'Street address is required';
     }
 
     if (step === 3) {
-      if (!formData.description.trim()) newErrors.description = 'Description is required';
-      if (formData.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
+      if (!formData.description.trim()) newErrors.description = language === 'my' ? 'ဖော်ပြချက် ထည့်ပါ' : 'Description is required';
+      if (formData.description.length > 2000) newErrors.description = language === 'my' ? 'ဖော်ပြချက် ၂၀၀၀ စာလုံးထက် မကျော်ရ' : 'Description must be under 2000 characters';
     }
 
     setErrors(newErrors);
@@ -235,7 +237,7 @@ export function AddEditProperty() {
 
   const handleSubmit = async () => {
     if (isEditing && !existing) {
-      setErrors({ submit: 'Property not found or you do not own it.' });
+      setErrors({ submit: language === 'my' ? 'ပြင်ဆင်ရန် အိမ်ခြံမြေကို ရှာမတွေ့ပါ' : 'Property not found or you do not own it.' });
       return;
     }
 
@@ -243,7 +245,7 @@ export function AddEditProperty() {
       const year = Number(formData.yearBuilt);
       if (!Number.isInteger(year) || year < 1900 || year > 2030) {
         setCurrentStep(1);
-        setErrors({ yearBuilt: 'Year built must be between 1900 and 2030' });
+        setErrors({ yearBuilt: language === 'my' ? 'ဆောက်လုပ်သည့်နှစ်ကို 1900 နှင့် 2030 ကြား ထည့်ပါ' : 'Year built must be between 1900 and 2030' });
         return;
       }
     }
@@ -299,7 +301,7 @@ export function AddEditProperty() {
       setErrors({
         submit: error instanceof Error
           ? error.message
-          : 'Unable to save the property.',
+          : (language === 'my' ? 'အိမ်ခြံမြေကို သိမ်းဆည်း၍ မရပါ' : 'Unable to save the property.'),
       });
     } finally {
       setLoading(false);
@@ -324,13 +326,13 @@ export function AddEditProperty() {
             <Check className="w-10 h-10 text-white" />
           </div>
           <h2 className="form-success-title">
-            Property Submitted!
+            {language === 'my' ? 'အိမ်ခြံမြေ တင်သွင်းပြီးပါပြီ!' : 'Property Submitted!'}
           </h2>
           <p className="form-success-desc">
-            Your property has been submitted for approval.
+            {language === 'my' ? 'သင့်အိမ်ခြံမြေကို အတည်ပြုချက်အတွက် တင်သွင်းပြီးပါပြီ။' : 'Your property has been submitted for approval.'}
           </p>
           <p className="form-success-desc" style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
-            After admin approval, your listing will appear in your ownership records.
+            {language === 'my' ? 'Admin မှ အတည်ပြုပြီးနောက် သင့်ပိုင်ဆိုင်မှု စာရင်းတွင် ပေါ်လာပါမည်။' : 'After admin approval, your listing will appear in your ownership records.'}
           </p>
           <button
             onClick={() => navigate('/dashboard')}
@@ -346,7 +348,7 @@ export function AddEditProperty() {
               boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
             }}
           >
-            Go to Dashboard
+            {language === 'my' ? 'ဒက်ရှ်ဘုတ်သို့ သွားရန်' : 'Go to Dashboard'}
           </button>
         </div>
       </div>
@@ -358,20 +360,22 @@ export function AddEditProperty() {
       <div className="form-container">
         <button onClick={() => navigate(-1)} className="form-back-btn">
           <ArrowLeft className="w-5 h-5" />
-          Back to Dashboard
+          {language === 'my' ? 'ဒက်ရှ်ဘုတ်သို့ ပြန်ရန်' : 'Back to Dashboard'}
         </button>
 
         <h1 className="form-page-title">
           {isEditing
-            ? 'Edit Property'
-            : 'Add New Property'}
+            ? (language === 'my' ? 'အိမ်ခြံမြေ ပြင်ဆင်ပါ' : 'Edit Property')
+            : (language === 'my' ? 'အိမ်ခြံမြေအသစ် ထည့်ပါ' : 'Add New Property')}
         </h1>
         <p className="form-page-subtitle">
-          Complete the form below to list your property on UrbanNest
+          {language === 'my'
+            ? 'သင့်အိမ်ခြံမြေကို စာရင်းတင်ရန် အောက်ပါဖောင်ကို ဖြည့်ပါ'
+            : 'Complete the form below to list your property on UrbanNest'}
         </p>
         {isEditing && !propertiesLoading && !existing && (
           <p className="form-error">
-            Property not found or you do not own it.
+            {language === 'my' ? 'ပြင်ဆင်ရန် အိမ်ခြံမြေကို ရှာမတွေ့ပါ' : 'Property not found or you do not own it.'}
           </p>
         )}
 
@@ -406,24 +410,24 @@ export function AddEditProperty() {
                     </div>
                     <div>
                       <h2 className="form-section-title">
-                        Basic Information
+                        {language === 'my' ? 'အခြေခံ အချက်အလက်' : 'Basic Information'}
                       </h2>
                       <p className="form-section-desc">
-                        Fundamental details about your property
+                        {language === 'my' ? 'သင့်အိမ်ခြံမြေ၏ အခြေခံ အချက်အလက်များ' : 'Fundamental details about your property'}
                       </p>
                     </div>
                   </div>
 
                   <div className="form-field">
                     <label className="form-label">
-                      Listing Title <span className="required">*</span>
+                      {language === 'my' ? 'ခေါင်းစဉ်' : 'Listing Title'} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => updateForm({ title: e.target.value })}
                       className={`form-input ${errors.title ? 'error' : ''}`}
-                      placeholder="e.g., Modern Waterfront Residence"
+                      placeholder={language === 'my' ? 'ဥပမာ - မြို့တော် ကမ်းခြေ နေအိမ်' : 'e.g., Modern Waterfront Residence'}
                     />
                     {errors.title && <p className="form-error">{errors.title}</p>}
                   </div>
@@ -431,17 +435,17 @@ export function AddEditProperty() {
                   <div className="form-grid-2">
                     <div className="form-field">
                       <label className="form-label">
-                        Property Type <span className="required">*</span>
+                        {language === 'my' ? 'အိမ်ခြံမြေ အမျိုးအစား' : 'Property Type'} <span className="required">*</span>
                       </label>
                       <select
                         value={formData.propertyType}
                         onChange={(e) => updateForm({ propertyType: e.target.value as PropertyType })}
                         className={`form-select ${errors.propertyType ? 'error' : ''}`}
                       >
-                        <option value="">Select Type</option>
+                        <option value="">{language === 'my' ? 'အမျိုးအစား ရွေးပါ' : 'Select Type'}</option>
                         {PROPERTY_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
-                            {type.label}
+                            {language === 'my' ? type.labelMy : type.labelEn}
                           </option>
                         ))}
                       </select>
@@ -450,7 +454,7 @@ export function AddEditProperty() {
 
                     <div className="form-field">
                       <label className="form-label">
-                        Listing Status
+                        {language === 'my' ? 'စာရင်း အမျိုးအစား' : 'Listing Status'}
                       </label>
                       <div className="status-toggle">
                         <button
@@ -458,14 +462,14 @@ export function AddEditProperty() {
                           onClick={() => updateForm({ status: 'FOR_SALE' })}
                           className={`status-toggle-btn ${formData.status === 'FOR_SALE' ? 'active' : ''}`}
                         >
-                          For Sale
+                          {language === 'my' ? 'ရောင်းရန်' : 'For Sale'}
                         </button>
                         <button
                           type="button"
                           onClick={() => updateForm({ status: 'FOR_RENT' })}
                           className={`status-toggle-btn ${formData.status === 'FOR_RENT' ? 'active' : ''}`}
                         >
-                          For Rent
+                          {language === 'my' ? 'ငှားရန်' : 'For Rent'}
                         </button>
                       </div>
                     </div>
@@ -473,7 +477,7 @@ export function AddEditProperty() {
 
                   <div className="form-field">
                     <label className="form-label">
-                      Asking Price (MMK) <span className="required">*</span>
+                      {language === 'my' ? 'စျေးနှုန်း (MMK)' : 'Asking Price (MMK)'} <span className="required">*</span>
                     </label>
                     <div className="price-input-wrapper">
                       <span className="price-input-prefix">K</span>
@@ -493,50 +497,50 @@ export function AddEditProperty() {
                     <div className="form-grid-4">
                       <div className="form-field">
                         <label className="form-label">
-                          Land Area <span className="required">*</span>
+                          {language === 'my' ? 'မြေအကျယ်' : 'Land Area'} <span className="required">*</span>
                         </label>
                         <input
                           type="number"
                           value={formData.area}
                           onChange={(e) => updateForm({ area: e.target.value })}
                           className={`form-input ${errors.area ? 'error' : ''}`}
-                          placeholder="e.g., 2400"
+                          placeholder={language === 'my' ? 'ဥပမာ - 2400' : 'e.g., 2400'}
                           min="0"
                         />
                         {errors.area && <p className="form-error">{errors.area}</p>}
                       </div>
                       <div className="form-field">
                         <label className="form-label">
-                          Plot/Frontage Width
+                          {language === 'my' ? 'ဖေါက်လမ်း နံပါတ်' : 'Plot/Frontage Width'}
                         </label>
                         <input
                           type="number"
                           value={formData.plotDimension}
                           disabled
                           className="form-input"
-                          placeholder="e.g., 20"
+                          placeholder={language === 'my' ? 'ဥပမာ - 20' : 'e.g., 20'}
                           min="0"
                         />
                       </div>
                       <div className="form-field">
                         <label className="form-label">
-                          Land Shape
+                          {language === 'my' ? 'ဖော' : 'Land Shape'}
                         </label>
                         <select
                           value={formData.landShape}
                           disabled
                           className="form-select"
                         >
-                          <option value="">Select</option>
-                          <option value="RECTANGLE">Rectangular</option>
-                          <option value="SQUARE">Square</option>
-                          <option value="CORNER">Corner plot</option>
-                          <option value="IRREGULAR">Irregular</option>
+                          <option value="">{language === 'my' ? 'ရွေးပါ' : 'Select'}</option>
+                          <option value="RECTANGLE">{language === 'my' ? 'စတုဂံ' : 'Rectangular'}</option>
+                          <option value="SQUARE">{language === 'my' ? 'စတုရန်း' : 'Square'}</option>
+                          <option value="CORNER">{language === 'my' ? 'ထောင့်' : 'Corner plot'}</option>
+                          <option value="IRREGULAR">{language === 'my' ? 'ပုံစံမမှန်' : 'Irregular'}</option>
                         </select>
                       </div>
                       <div className="form-field">
                         <label className="form-label">
-                          Road Width (ft)
+                          {language === 'my' ? 'လမ်းအကျယ် (ပေ)' : 'Road Width (ft)'}
                         </label>
                         <input
                           type="number"
@@ -553,7 +557,7 @@ export function AddEditProperty() {
                       <div className="form-grid-4">
                         <div className="form-field">
                           <label className="form-label">
-                            Bedrooms
+                            {language === 'my' ? 'အိပ်ခန်း' : 'Bedrooms'}
                           </label>
                           <select
                             value={formData.bedrooms}
@@ -567,7 +571,7 @@ export function AddEditProperty() {
                         </div>
                         <div className="form-field">
                           <label className="form-label">
-                            Bathrooms
+                            {language === 'my' ? 'ရေချိုခန်း' : 'Bathrooms'}
                           </label>
                           <select
                             value={formData.bathrooms}
@@ -581,14 +585,14 @@ export function AddEditProperty() {
                         </div>
                         <div className="form-field">
                           <label className="form-label">
-                            Parking
+                            {language === 'my' ? 'ကားရပ်နား' : 'Parking'}
                           </label>
                           <select
                             value={formData.parking}
                             onChange={(e) => updateForm({ parking: e.target.value === '' ? '' : Number(e.target.value) })}
                             className="form-select"
                           >
-                            <option value="">Not specified</option>
+                            <option value="">{language === 'my' ? 'မသတ်မှတ်ရသေး' : 'Not specified'}</option>
                             {PARKING_OPTIONS.map((n) => (
                               <option key={n} value={n}>{n}</option>
                             ))}
@@ -596,7 +600,7 @@ export function AddEditProperty() {
                         </div>
                         <div className="form-field">
                           <label className="form-label">
-                            Year Built
+                            {language === 'my' ? 'ဆောက်လုပ်သည့်နှစ်' : 'Year Built'}
                           </label>
                           <input
                             type="number"
@@ -613,14 +617,14 @@ export function AddEditProperty() {
 
                       <div className="form-field">
                         <label className="form-label">
-                          Total Area (sqft) <span className="required">*</span>
+                          {language === 'my' ? 'အကျယ်အဝန်း (sqft)' : 'Total Area (sqft)'} <span className="required">*</span>
                         </label>
                         <input
                           type="number"
                           value={formData.area}
                           onChange={(e) => updateForm({ area: e.target.value })}
                           className={`form-input ${errors.area ? 'error' : ''}`}
-                          placeholder="e.g., 2400"
+                          placeholder={language === 'my' ? 'ဥပမာ - 2400' : 'e.g., 2400'}
                           min="0"
                         />
                         {errors.area && <p className="form-error">{errors.area}</p>}
@@ -638,10 +642,10 @@ export function AddEditProperty() {
                     </div>
                     <div>
                       <h2 className="form-section-title">
-                        Property Location
+                        {language === 'my' ? 'တည်နေရာ' : 'Property Location'}
                       </h2>
                       <p className="form-section-desc">
-                        Where is your property located?
+                        {language === 'my' ? 'သင့်အိမ်ခြံမြေ၏ တည်နေရာ' : 'Where is your property located?'}
                       </p>
                     </div>
                   </div>
@@ -649,17 +653,17 @@ export function AddEditProperty() {
                   <div className="form-grid-2">
                     <div className="form-field">
                       <label className="form-label">
-                        Township <span className="required">*</span>
+                        {language === 'my' ? 'မြို့နယ်' : 'Township'} <span className="required">*</span>
                       </label>
                       <select
                         value={formData.township}
                         onChange={(e) => updateForm({ township: e.target.value })}
                         className={`form-select ${errors.township ? 'error' : ''}`}
                       >
-                        <option value="">Select Township</option>
+                        <option value="">{language === 'my' ? 'မြို့နယ် ရွေးပါ' : 'Select Township'}</option>
                         {YANGON_TOWNSHIPS.map((tw) => (
                           <option key={tw.id} value={tw.id}>
-                            {tw.nameEn}
+                            {language === 'my' ? tw.nameMy : tw.nameEn}
                           </option>
                         ))}
                       </select>
@@ -668,7 +672,7 @@ export function AddEditProperty() {
 
                     <div className="form-field">
                       <label className="form-label">
-                        City
+                        {language === 'my' ? 'မြို့' : 'City'}
                       </label>
                       <input
                         type="text"
@@ -683,7 +687,7 @@ export function AddEditProperty() {
                   <div className="form-grid-2">
                     <div className="form-field">
                       <label className="form-label">
-                        State / Region
+                        {language === 'my' ? 'ပြည်နယ်/ဒေသ' : 'State / Region'}
                       </label>
                       <input
                         type="text"
@@ -696,7 +700,7 @@ export function AddEditProperty() {
 
                     <div className="form-field">
                       <label className="form-label">
-                        ZIP Code
+                        {language === 'my' ? 'ZIP Code' : 'ZIP Code'}
                       </label>
                       <input
                         type="text"
@@ -710,14 +714,14 @@ export function AddEditProperty() {
 
                   <div className="form-field">
                     <label className="form-label">
-                      Street Address <span className="required">*</span>
+                      {language === 'my' ? 'လိပ်စာ' : 'Street Address'} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
                       value={formData.streetAddress}
                       onChange={(e) => updateForm({ streetAddress: e.target.value })}
                       className={`form-input ${errors.streetAddress ? 'error' : ''}`}
-                      placeholder="e.g., No. 45, Shwegondine Road"
+                      placeholder={language === 'my' ? 'ဥပမာ - အမှတ် ၄၅၊ ရွှေကုန်းဒင်လမ်း' : 'e.g., No. 45, Shwegondine Road'}
                     />
                     {errors.streetAddress && <p className="form-error">{errors.streetAddress}</p>}
                   </div>
@@ -727,15 +731,15 @@ export function AddEditProperty() {
                       <MapPin className="w-8 h-8" />
                     </div>
                     <p className="map-preview-title">
-                      Map Preview
+                      {language === 'my' ? 'မြေပုံ ကြိုကြည့်' : 'Map Preview'}
                     </p>
                     <p className="map-preview-desc">
-                      Enter your address above to pin the location
+                      {language === 'my' ? 'တည်နေရာကို ပြပေးရန် အပေါ်တွင် လိပ်စာ ထည့်ပါ' : 'Enter your address above to pin the location'}
                     </p>
                     {formData.township && selectedTownship && (
                       <div className="map-preview-badge">
                         <MapPin className="w-4 h-4" />
-                        {selectedTownship.nameEn}, Yangon
+                        {language === 'my' ? selectedTownship.nameMy : selectedTownship.nameEn}, Yangon
                       </div>
                     )}
                   </div>
@@ -750,23 +754,25 @@ export function AddEditProperty() {
                     </div>
                     <div>
                       <h2 className="form-section-title">
-                        Details & Features
+                        {language === 'my' ? 'အသေးစိတ်နှင့် လုပ်ဆောင်ချက်များ' : 'Details & Features'}
                       </h2>
                       <p className="form-section-desc">
-                        Describe your property in detail
+                        {language === 'my' ? 'သင့်အိမ်ခြံမြေကို ပိုမိုဖော်ပြပါ' : 'Describe your property in detail'}
                       </p>
                     </div>
                   </div>
 
                   <div className="form-field">
                     <label className="form-label">
-                      Property Description <span className="required">*</span>
+                      {language === 'my' ? 'ဖော်ပြချက်' : 'Property Description'} <span className="required">*</span>
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => updateForm({ description: e.target.value })}
                       className={`form-textarea ${errors.description ? 'error' : ''}`}
-                      placeholder="Describe your property — highlight what makes it special. Mention views, recent renovations, standout features, and neighborhood character."
+                      placeholder={language === 'my'
+                        ? 'သင့်အိမ်ခြံမြေကို ဖော်ပြပါ — ဘာကြောင့် အထူးဖြစ်သည်ကို ပြောပြပါ။ ရှုခင်းများ၊ ပြန်လည်ပြင်ဆင်ထားမှုများ၊ ထင်ရှားသည့် လုပ်ဆောင်ချက်များနှင့် ပတ်ဝန်းကျင် အကြောင်းအရာများကို ထည့်သွင်းပါ။'
+                        : 'Describe your property — highlight what makes it special. Mention views, recent renovations, standout features, and neighborhood character.'}
                       maxLength={2000}
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -779,17 +785,17 @@ export function AddEditProperty() {
 
                   <div className="form-field">
                     <label className="form-label">
-                      Ownership Type
+                      {language === 'my' ? 'ပိုင်ဆိုင်မှု အမျိုးအစား' : 'Ownership Type'}
                     </label>
                     <select
                       value={formData.ownershipType}
                       onChange={(e) => updateForm({ ownershipType: e.target.value as OwnershipType | '' })}
                       className="form-select"
                     >
-                      <option value="">Select Ownership Type</option>
+                      <option value="">{language === 'my' ? 'ပိုင်ဆိုင်မှု အမျိုးအစား ရွေးပါ' : 'Select Ownership Type'}</option>
                       {OWNERSHIP_TYPES.map((type) => (
                         <option key={type.value} value={type.value}>
-                          {type.label}
+                          {language === 'my' ? type.labelMy : type.labelEn}
                         </option>
                       ))}
                     </select>
@@ -797,7 +803,7 @@ export function AddEditProperty() {
 
                   <div className="form-field">
                     <label className="form-label">
-                      Property Features
+                      {language === 'my' ? 'လုပ်ဆောင်ချက်များ' : 'Property Features'}
                     </label>
                     <div className="feature-tags">
                       {featureLabels.map((label, index) => {
@@ -815,14 +821,14 @@ export function AddEditProperty() {
                       })}
                     </div>
                     <p className="feature-count">
-                      {formData.features.length} features selected
+                      {formData.features.length} {language === 'my' ? 'လုပ်ဆောင်ချက် ရွေးချယ်ထားသည်' : 'features selected'}
                     </p>
                   </div>
 
                   <div className="docs-section">
                     <h3 className="docs-title">
                       <FileText className="w-5 h-5" />
-                      Documents
+                      {language === 'my' ? 'စာရွက်စာတမ်းများ' : 'Documents'}
                     </h3>
                     <div className="docs-checks">
                       <button
@@ -835,10 +841,10 @@ export function AddEditProperty() {
                         </div>
                         <span className="doc-checkbox-label">
                           <span className="doc-check-title">
-                            Has Grant
+                            {language === 'my' ? 'ခွင့်ပြုချက်' : 'Has Grant'}
                           </span>
                           <span className="doc-check-sub">
-                            Grant title
+                            {language === 'my' ? 'ဂရန်ရှိ' : 'Grant title'}
                           </span>
                         </span>
                       </button>
@@ -853,10 +859,10 @@ export function AddEditProperty() {
                         </div>
                         <span className="doc-checkbox-label">
                           <span className="doc-check-title">
-                            Has Permit
+                            {language === 'my' ? 'ခွင့်ပြုချက် လိုင်စင်' : 'Has Permit'}
                           </span>
                           <span className="doc-check-sub">
-                            Building permit
+                            {language === 'my' ? 'ဆောက်လုပ်ခွင့်' : 'Building permit'}
                           </span>
                         </span>
                       </button>
@@ -873,17 +879,17 @@ export function AddEditProperty() {
                     </div>
                     <div>
                       <h2 className="form-section-title">
-                        Photos & Review
+                        {language === 'my' ? 'ဓာတ်ပုံနှင့် ပြန်လည်သုံးသပ်ခြင်း' : 'Photos & Review'}
                       </h2>
                       <p className="form-section-desc">
-                        Add a main image URL and review your listing
+                        {language === 'my' ? 'အဓိက ဓာတ်ပုံလင့်ခ်နှင့် နောက်ဆုံး ပြန်လည်သုံးသပ်ပါ' : 'Add a main image URL and review your listing'}
                       </p>
                     </div>
                   </div>
 
                   <div className="form-field">
                     <label className="form-label">
-                      Main Image
+                      {language === 'my' ? 'အဓိက ဓာတ်ပုံ' : 'Main Image'}
                     </label>
                     <input
                       type="url"
@@ -909,22 +915,22 @@ export function AddEditProperty() {
 
                   <div className="form-field">
                     <label className="form-label">
-                      Additional Images
+                      {language === 'my' ? 'ထပ်ဆင့် ဓာတ်ပုံများ' : 'Additional Images'}
                     </label>
                     <p className="form-section-desc">
-                      The current backend supports one image URL per property.
+                      {language === 'my' ? 'လက်ရှိ backend သည် ဓာတ်ပုံတစ်ပုံလင့်ခ်သာ သိမ်းဆည်းနိုင်သည်။' : 'The current backend supports one image URL per property.'}
                     </p>
                   </div>
 
                   <div className="summary-card" style={{ marginBottom: '16px' }}>
                     <h3 className="summary-title">
                       <Building2 className="w-5 h-5 text-blue-600" />
-                      Listing Summary
+                      {language === 'my' ? 'စာရင်း အနှစ်ချုပ်' : 'Listing Summary'}
                     </h3>
                     <div className="summary-grid">
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Title
+                          {language === 'my' ? 'ခေါင်းစဉ်' : 'Title'}
                         </p>
                         <p className="summary-item-value">
                           {formData.title || '—'}
@@ -932,27 +938,29 @@ export function AddEditProperty() {
                       </div>
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Type
+                          {language === 'my' ? 'အမျိုးအစား' : 'Type'}
                         </p>
                         <p className="summary-item-value">
                           {formData.propertyType
-                            ? PROPERTY_TYPES.find(t => t.value === formData.propertyType)?.label
+                            ? (language === 'my'
+                                ? PROPERTY_TYPES.find(t => t.value === formData.propertyType)?.labelMy
+                                : PROPERTY_TYPES.find(t => t.value === formData.propertyType)?.labelEn)
                             : '—'}
                         </p>
                       </div>
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Status
+                          {language === 'my' ? 'စာရင်း' : 'Status'}
                         </p>
                         <p className="summary-item-value">
                           {formData.status === 'FOR_SALE'
-                            ? 'For Sale'
-                            : 'For Rent'}
+                            ? (language === 'my' ? 'ရောင်းရန်' : 'For Sale')
+                            : (language === 'my' ? 'ငှားရန်' : 'For Rent')}
                         </p>
                       </div>
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Price
+                          {language === 'my' ? 'စျေးနှုန်း' : 'Price'}
                         </p>
                         <p className="summary-item-value">
                           {formData.price ? `MMK ${formatPrice(formData.price)}` : '—'}
@@ -960,7 +968,7 @@ export function AddEditProperty() {
                       </div>
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Beds / Baths
+                          {language === 'my' ? 'အိပ်ခန်း / ရေချိုခန်း' : 'Beds / Baths'}
                         </p>
                         <p className="summary-item-value">
                           {formData.bedrooms} / {formData.bathrooms}
@@ -968,7 +976,7 @@ export function AddEditProperty() {
                       </div>
                       <div className="summary-item">
                         <p className="summary-item-label">
-                          Area
+                          {language === 'my' ? 'အကျယ်အဝန်း' : 'Area'}
                         </p>
                         <p className="summary-item-value">
                           {formData.area ? `${formData.area} sqft` : '—'}
@@ -976,21 +984,21 @@ export function AddEditProperty() {
                       </div>
                       <div className="summary-item full-width">
                         <p className="summary-item-label">
-                          Location
+                          {language === 'my' ? 'တည်နေရာ' : 'Location'}
                         </p>
                         <p className="summary-item-value">
                           {selectedTownship
-                            ? (selectedTownship.nameEn)
+                            ? (language === 'my' ? selectedTownship.nameMy : selectedTownship.nameEn)
                             : '—'}
                           {formData.city ? `, ${formData.city}` : ''}
                         </p>
                       </div>
                       <div className="summary-item full-width">
                         <p className="summary-item-label">
-                          Features
+                          {language === 'my' ? 'လုပ်ဆောင်ချက်များ' : 'Features'}
                         </p>
                         <p className="summary-item-value">
-                          {formData.features.length} selected
+                          {formData.features.length} {language === 'my' ? 'ခု ရွေးချယ်ထားသည်' : 'selected'}
                         </p>
                       </div>
                     </div>
@@ -998,12 +1006,12 @@ export function AddEditProperty() {
 
                   <div className="contact-card">
                     <h3 className="contact-card-title">
-                      Contact Information
+                      {language === 'my' ? 'ဆက်သွယ်ရန် အချက်အလက်' : 'Contact Information'}
                     </h3>
                     <div className="form-grid-2">
                       <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label">
-                          Phone Number <span className="required">*</span>
+                          {language === 'my' ? 'ဖုန်းနံပါတ်' : 'Phone Number'} <span className="required">*</span>
                         </label>
                         <input
                           type="tel"
@@ -1015,7 +1023,7 @@ export function AddEditProperty() {
                       </div>
                       <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label">
-                          Email
+                          {language === 'my' ? 'အီးမေးလ်' : 'Email'}
                         </label>
                         <input
                           type="email"
@@ -1036,7 +1044,7 @@ export function AddEditProperty() {
               {currentStep > 1 ? (
                 <button type="button" onClick={handlePrev} className="form-btn-back">
                   <ArrowLeft className="w-4 h-4" />
-                  Back
+                  {language === 'my' ? 'နောက်သို့' : 'Back'}
                 </button>
               ) : (
                 <div />
@@ -1044,7 +1052,7 @@ export function AddEditProperty() {
 
               {currentStep < 4 ? (
                 <button type="button" onClick={handleNext} className="form-btn-next">
-                  Continue
+                  {language === 'my' ? 'ရှေ့သို့' : 'Continue'}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -1054,7 +1062,7 @@ export function AddEditProperty() {
                   ) : (
                     <>
                       <Check className="w-5 h-5" />
-                      Submit Listing
+                      {language === 'my' ? 'စာရင်းတင်ပါ' : 'Submit Listing'}
                     </>
                   )}
                 </button>

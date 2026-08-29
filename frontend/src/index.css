@@ -1000,6 +1000,26 @@ body {
   color: white;
 }
 
+/* ===== LANGUAGE SWITCHER ===== */
+.lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  transition: background 0.2s;
+}
+
+.lang-switcher:hover {
+  background: #e2e8f0;
+}
+
 /* ===== MOBILE MENU ===== */
 .mobile-menu-btn {
   display: none;

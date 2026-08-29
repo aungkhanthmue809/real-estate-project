@@ -11,6 +11,7 @@ import { AddEditProperty } from './pages/AddEditProperty';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminDataManagement } from './pages/AdminDataManagement';
 import { AuthProvider } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PropertiesProvider } from './contexts/PropertiesContext';
 import './App.css';
@@ -48,15 +49,17 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <FavoritesProvider>
-        <PropertiesProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </PropertiesProvider>
-      </FavoritesProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <FavoritesProvider>
+          <PropertiesProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </PropertiesProvider>
+        </FavoritesProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

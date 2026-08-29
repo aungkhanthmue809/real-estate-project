@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, MapPin, Bed, Bath, Square, Heart, ArrowRight, Compass, Bell, Home as HomeIcon, ChevronDown, Building2, Landmark } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS } from '../data/myanmarProperties';
@@ -22,18 +23,22 @@ const formatMMK = (value: number) => {
 };
 
 const FEATURES = [
-  { icon: Search, title: 'Smart Search', desc: 'Search by township, property type, and budget to find the right home in Yangon.' },
-  { icon: Compass, title: 'Verified Listings', desc: 'Every property is reviewed by our admins before it goes live for buyers.' },
-  { icon: Bell, title: 'Instant Alerts', desc: 'Track your listings and get notified about approval status updates.' },
-  { icon: Heart, title: 'Save & Shortlist', desc: 'Save your favorite homes and compare them anytime from your dashboard.' },
+  { icon: Search, titleEn: 'Smart Search', titleMy: 'ဉာဏ်ရည်တု ရှာဖွေမှု', descEn: 'Search by township, property type, and budget to find the right home in Yangon.', descMy: 'မြို့နယ်၊ အိမ်အမျိုးအစားနှင့် ဘတ်ဂျက်အလိုက် ရှာဖွေပြီး ရန်ကုန်ရှိ သင့်တော်သောအိမ်ကို ရှာပါ။' },
+  { icon: Compass, titleEn: 'Verified Listings', titleMy: 'စစ်ဆေးပြီး ကြော်ငြာများ', descEn: 'Every property is reviewed by our admins before it goes live for buyers.', descMy: 'အိမ်ဝယ်သူများအတွက် မဖော်ပြမီ ကြော်ငြာတိုင်းကို ကျွန်ုပ်တို့၏ အက်ဒမင်များက စစ်ဆေးပါသည်။' },
+  { icon: Bell, titleEn: 'Instant Alerts', titleMy: 'ချက်ချင်း သတိပေးချက်', descEn: 'Track your listings and get notified about approval status updates.', descMy: 'သင့်ကြော်ငြာများကို ခြေရာခံပြီး ခွင့်ပြုချက်အခြေအနေ အပ်ဒိတ်များအကြောင်း အသိပေးချက်ရယူပါ။' },
+  { icon: Heart, titleEn: 'Save & Shortlist', titleMy: 'သိမ်းဆည်း စာရင်း', descEn: 'Save your favorite homes and compare them anytime from your dashboard.', descMy: 'နှစ်သက်ရာ အိမ်များကို သိမ်းဆည်းပြီး သင့် ဒက်ရှ်ဘုတ်မှ အချိန်မရွေး နှိုင်းယှဉ်ကြည့်နိုင်ပါသည်။' },
 ];
 
-function PropertyCard({ property }: { property: Property }) {
+function PropertyCard({ property, language }: { property: Property; language: string }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favoriteId = String(property.id);
   const isFav = isFavorite(favoriteId);
-  const type = property.propertyType.charAt(0) + property.propertyType.slice(1).toLowerCase();
-  const badge = property.status === 'FOR_RENT' ? 'For Rent' : 'For Sale';
+  const type = language === 'my'
+    ? ({ APARTMENT: 'အခန်း', HOUSE: 'အိမ်', CONDO: 'ကွန်ဒို', LAND: 'မြေ', TOWNHOUSE: 'တိုက်ခန်း' }[property.propertyType])
+    : property.propertyType.charAt(0) + property.propertyType.slice(1).toLowerCase();
+  const badge = property.status === 'FOR_RENT'
+    ? (language === 'my' ? 'ငှားရန်' : 'For Rent')
+    : (language === 'my' ? 'ရောင်းရန်' : 'For Sale');
   const isForRent = property.status === 'FOR_RENT';
 
   return (
@@ -69,19 +74,19 @@ function PropertyCard({ property }: { property: Property }) {
         </p>
         <div className="property-specs">
           <span className="property-spec">
-            <Bed className="w-4 h-4" /> {property.bedrooms} beds
+            <Bed className="w-4 h-4" /> {property.bedrooms} {language === 'my' ? 'အိပ်ခန်း' : 'beds'}
           </span>
           <span className="property-spec">
-            <Bath className="w-4 h-4" /> {property.bathrooms} baths
+            <Bath className="w-4 h-4" /> {property.bathrooms} {language === 'my' ? 'ရေချိုခန်း' : 'baths'}
           </span>
           <span className="property-spec">
-            <Square className="w-4 h-4" /> {property.area.toLocaleString()} sqft
+            <Square className="w-4 h-4" /> {property.area.toLocaleString()} {language === 'my' ? 'စတုရန်းပေ' : 'sqft'}
           </span>
         </div>
         <div className="property-footer">
           <span className="property-price">{formatMMK(property.price)}</span>
           <Link to={`/property/${property.id}`} className="property-details-link">
-            View Details <ArrowRight className="w-4 h-4" />
+            {language === 'my' ? 'အသေးစိတ်ကြည့်ရန်' : 'View Details'} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>
@@ -91,6 +96,7 @@ function PropertyCard({ property }: { property: Property }) {
 
 export function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { language } = useLanguage();
   const { properties, loading, error } = useProperties();
   const rawListing = searchParams.get('listing');
   const rawTown = searchParams.get('town');
@@ -168,7 +174,7 @@ export function Home() {
     e.preventDefault();
   };
 
-  const renderTown = (town: { nameEn: string }) => town.nameEn;
+  const renderTown = (town: { nameEn: string; nameMy: string }) => (language === 'my' ? town.nameMy : town.nameEn);
 
   return (
     <div className="min-h-screen">
@@ -265,7 +271,7 @@ export function Home() {
             <div className="search-locations">
               {YANGON_TOWNSHIPS.slice(0, 4).map((town) => (
                 <button key={town.id} type="button" onClick={() => updateFilter('town', town.id)} className={`search-location-tag ${selectedTown === town.id ? 'active' : ''}`}>
-                  {town.nameEn}
+                  {language === 'my' ? town.nameMy : town.nameEn}
                 </button>
               ))}
             </div>
@@ -307,27 +313,27 @@ export function Home() {
         </div>
         <div className="properties-grid">
           {!loading && !error && filteredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+            <PropertyCard key={property.id} property={property} language={language} />
           ))}
         </div>
-        {loading && <div className="no-results"><p className="no-results-title">Loading properties...</p></div>}
+        {loading && <div className="no-results"><p className="no-results-title">{language === 'my' ? 'အိမ်ခြံမြေများ ရယူနေပါသည်...' : 'Loading properties...'}</p></div>}
         {!loading && error && (
           <div className="no-results">
-            <p className="no-results-title">Unable to load properties</p>
+            <p className="no-results-title">{language === 'my' ? 'အိမ်ခြံမြေများ ရယူ၍ မရပါ' : 'Unable to load properties'}</p>
             <p className="no-results-sub">{error}</p>
           </div>
         )}
         {!loading && !error && filteredProperties.length === 0 && (
           <div className="no-results">
             <Search className="no-results-icon" />
-            <p className="no-results-title">No properties match your search</p>
-            <p className="no-results-sub">Try clearing the filters or choose another township.</p>
+            <p className="no-results-title">{language === 'my' ? 'သင့်ရှာဖွေမှုနှင့် ကိုက်ညီသော အိမ်ခြံမြေ မရှိပါ' : 'No properties match your search'}</p>
+            <p className="no-results-sub">{language === 'my' ? 'စစ်ထုတ်မှုများကို ရှင်းပါ သို့မဟုတ် အခြားမြို့နယ်ကို ရွေးပါ။' : 'Try clearing the filters or choose another township.'}</p>
             <button
               type="button"
               className="no-results-btn"
               onClick={clearOptionalFilters}
             >
-              Clear Filters
+              {language === 'my' ? 'စစ်ထုတ်မှုများ ရှင်းပါ' : 'Clear Filters'}
             </button>
           </div>
         )}
@@ -345,8 +351,8 @@ export function Home() {
                 <div className="feature-icon">
                   <feature.icon />
                 </div>
-                <h3 className="feature-name">{feature.title}</h3>
-                <p className="feature-desc">{feature.desc}</p>
+                <h3 className="feature-name">{language === 'my' ? feature.titleMy : feature.titleEn}</h3>
+                <p className="feature-desc">{language === 'my' ? feature.descMy : feature.descEn}</p>
               </div>
             ))}
           </div>
@@ -385,7 +391,9 @@ export function Home() {
             <div>
               <h4 className="footer-col-title">Explore</h4>
               <ul className="footer-links">
-                <li className="footer-link"><Link to="/">Homepage</Link></li>
+                <li className="footer-link"><Link to="/?listing=buy">Buy a Home</Link></li>
+                <li className="footer-link"><Link to="/?listing=rent">Rent a Home</Link></li>
+                <li className="footer-link"><Link to="/">New Listings</Link></li>
               </ul>
             </div>
             <div>

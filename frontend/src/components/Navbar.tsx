@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut } from 'lucide-react';
+import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut, Globe } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { NotificationsBell } from './NotificationsBell';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -19,12 +21,18 @@ export function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/" className="navbar-link">Homepage</Link>
+          <Link to="/?listing=buy" className="navbar-link">Buy</Link>
+          <Link to="/?listing=rent" className="navbar-link">Rent</Link>
           <Link to="/about" className="navbar-link">About</Link>
           <Link to="/contact" className="navbar-link">Contact</Link>
         </div>
 
         <div className="navbar-actions">
+          <button onClick={toggleLanguage} className="lang-switcher" title="Switch Language">
+            <Globe className="w-4 h-4" />
+            {language === 'en' ? 'EN' : 'MY'}
+          </button>
+
           {isAuthenticated ? (
             <>
               {user && (
@@ -63,8 +71,11 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu active">
-          <Link to="/" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-            <Home className="w-5 h-5" /> Homepage
+          <Link to="/?listing=buy" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+            <Home className="w-5 h-5" /> Buy
+          </Link>
+          <Link to="/?listing=rent" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+            <Home className="w-5 h-5" /> Rent
           </Link>
           <Link to="/about" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> About Us
@@ -83,6 +94,9 @@ export function Navbar() {
               <PlusCircle className="w-5 h-5" /> Add Property
             </Link>
           )}
+          <button onClick={() => { toggleLanguage(); setMobileOpen(false); }} className="mobile-menu-link">
+            <Globe className="w-5 h-5" /> {language === 'en' ? 'Myanmar' : 'English'}
+          </button>
           {isAuthenticated ? (
             <button onClick={() => { logout(); setMobileOpen(false); }} className="mobile-menu-link" style={{ color: '#ef4444' }}>
               <LogOut className="w-5 h-5" /> Sign Out
