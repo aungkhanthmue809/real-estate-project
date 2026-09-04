@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, MapPin, Bed, Bath, Square, Heart, ArrowRight, ArrowUpDown, Compass, Bell, Home as HomeIcon, ChevronDown, Building2, Landmark } from 'lucide-react';
+import { Search, MapPin, Bed, Bath, Square, Heart, ArrowRight, ArrowUpDown, Compass, Bell, Home as HomeIcon, ChevronDown, Building2, Landmark, MapPinned, Smile, BadgeCheck, Camera, ShieldCheck, PlusCircle, CircleDollarSign } from 'lucide-react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { YANGON_TOWNSHIPS } from '../data/myanmarProperties';
@@ -48,7 +48,7 @@ function PropertyCard({ property }: { property: Property }) {
   const isForRent = property.status === 'FOR_RENT';
 
   return (
-    <div className="property-card">
+    <article className="property-card">
       <div className="property-image-wrapper">
         <img
           src={resolvePropertyImageUrl(property.imageUrl)}
@@ -60,8 +60,11 @@ function PropertyCard({ property }: { property: Property }) {
             event.currentTarget.src = '/property-placeholder.svg';
           }}
         />
-        <span className={`property-badge ${isForRent ? 'rent' : 'sale'}`}>{badge}</span>
-        <button onClick={() => toggleFavorite(favoriteId)} className="property-favorite" aria-label="Favorite">
+        <div className="property-badges">
+          <span className={`property-badge ${isForRent ? 'rent' : 'sale'}`}>{badge}</span>
+          <span className="property-active-badge"><span /> Active</span>
+        </div>
+        <button onClick={() => toggleFavorite(favoriteId)} className="property-favorite" aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}>
           <Heart
             className="w-5 h-5"
             color={isFav ? '#ef4444' : '#94a3b8'}
@@ -90,13 +93,16 @@ function PropertyCard({ property }: { property: Property }) {
           </span>
         </div>
         <div className="property-footer">
-          <span className="property-price">{formatPropertyPrice(property.price)}</span>
+          <div className="property-price-wrap">
+            <span className="property-price-label">Price</span>
+            <span className="property-price">{formatPropertyPrice(property.price)}</span>
+          </div>
           <Link to={`/property/${property.id}`} className="property-details-link">
             View Details <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -197,29 +203,29 @@ export function Home() {
   const renderTown = (town: { nameEn: string }) => town.nameEn;
 
   return (
-    <div className="min-h-screen">
+    <div className="home-page min-h-screen">
+      <div className="home-ambient" aria-hidden="true">
+        <span className="home-ambient-one" />
+        <span className="home-ambient-two" />
+        <span className="home-ambient-three" />
+      </div>
       <section className="hero">
         <div className="hero-bg"></div>
         <div className="hero-overlay"></div>
         <div className="hero-content">
-          <div className="hero-badge">
-            <span className="hero-badge-dot"></span>
-            {approvedPropertyCount} active {approvedPropertyCount === 1 ? 'listing' : 'listings'} in Yangon
+          <div className="search-toggle" aria-label="Listing type">
+            <button type="button" onClick={() => updateFilter('listing', 'buy')} className={`search-toggle-btn ${listingType === 'buy' ? 'active' : ''}`}>Buy</button>
+            <button type="button" onClick={() => updateFilter('listing', 'rent')} className={`search-toggle-btn ${listingType === 'rent' ? 'active' : ''}`}>Rent</button>
           </div>
-          <h1 className="hero-title">Find Your Perfect Home, Smarter.</h1>
+          <h1 className="hero-title">Discover Living Spaces Crafted for <em>Modern Solace</em></h1>
           <p className="hero-subtitle">
-            Search millions of listings with intelligent filters, instant alerts, and verified agents — all in one place.
+            Curated residential architecture, private sanctuaries, and urban lofts in prime city districts.
           </p>
           <div className="search-box">
-            <div className="search-toggle">
-              <button type="button" onClick={() => updateFilter('listing', 'buy')} className={`search-toggle-btn ${listingType === 'buy' ? 'active' : ''}`}>Buy</button>
-              <button type="button" onClick={() => updateFilter('listing', 'rent')} className={`search-toggle-btn ${listingType === 'rent' ? 'active' : ''}`}>Rent</button>
-            </div>
             <div className="search-filters">
               <div className="search-filter-field">
-                <label className="search-filter-label">Township</label>
+                <label className="search-filter-label"><Building2 /> Township</label>
                 <div className="search-select-wrap">
-                  <Building2 className="search-select-icon" />
                   <select
                     className="search-select"
                     value={selectedTown}
@@ -236,9 +242,8 @@ export function Home() {
                 </div>
               </div>
               <div className="search-filter-field">
-                <label className="search-filter-label">Property Type</label>
+                <label className="search-filter-label"><Landmark /> Property Type</label>
                 <div className="search-select-wrap">
-                  <Landmark className="search-select-icon" />
                   <select
                     className="search-select"
                     value={propertyType}
@@ -253,9 +258,8 @@ export function Home() {
                 </div>
               </div>
               <div className="search-filter-field">
-                <label className="search-filter-label">Bedrooms</label>
+                <label className="search-filter-label"><Bed /> Bedrooms</label>
                 <div className="search-select-wrap">
-                  <Bed className="search-select-icon" />
                   <select
                     className="search-select"
                     value={rawBedrooms ?? ''}
@@ -269,9 +273,9 @@ export function Home() {
                   <ChevronDown className="search-select-chevron" />
                 </div>
               </div>
-              <div className="search-filter-field">
+              <div className="search-filter-field search-price-field">
                 <label className="search-filter-label">
-                  {listingType === 'buy' ? 'Price Range' : 'Monthly Price'}
+                  <CircleDollarSign /> {listingType === 'buy' ? 'Price Range' : 'Monthly Price'}
                 </label>
                 <div className="search-price-row">
                   <div className="search-price-input-wrap">
@@ -299,12 +303,9 @@ export function Home() {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="search-sort-row">
               <div className="search-filter-field search-sort-field">
-                <label className="search-filter-label">Sort By</label>
+                <label className="search-filter-label"><ArrowUpDown /> Sort By</label>
                 <div className="search-select-wrap">
-                  <ArrowUpDown className="search-select-icon" />
                   <select
                     className="search-select"
                     value={sort}
@@ -318,43 +319,31 @@ export function Home() {
                 </div>
               </div>
             </div>
-            <div className="search-locations">
-              {YANGON_TOWNSHIPS.slice(0, 4).map((town) => (
-                <button key={town.id} type="button" onClick={() => updateFilter('town', town.id)} className={`search-location-tag ${selectedTown === town.id ? 'active' : ''}`}>
-                  {town.nameEn}
-                </button>
-              ))}
+          </div>
+          <div className="stats-section">
+            <div className="stat-item">
+              <span className="stat-icon stat-icon-primary"><Building2 /></span>
+              <div><div className="stat-value">{approvedPropertyCount}</div><div className="stat-label">Active Listings</div></div>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon stat-icon-secondary"><MapPinned /></span>
+              <div><div className="stat-value">1</div><div className="stat-label">City Covered</div></div>
+            </div>
+            <div className="stat-item">
+              <span className="stat-icon stat-icon-neutral"><Smile /></span>
+              <div><div className="stat-value">0 <small>New Platform</small></div><div className="stat-label">Happy Buyers</div></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="stats-section">
-        <div className="stats-card">
-          <div className="stat-item">
-            <div className="stat-value">{approvedPropertyCount}</div>
-            <div className="stat-label">Active Listings</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">1</div>
-            <div className="stat-label">City Covered</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">0</div>
-            <div className="stat-label">Happy Buyers</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="featured-section">
+      <section className="featured-section" id="featured-properties">
         <div className="featured-header">
           <div>
-            <div className="featured-label">Hand-Picked</div>
-            <h2 className="featured-title">Featured Properties</h2>
+            <div className="featured-label"><span /> Curated Catalog</div>
+            <h2 className="featured-title">Featured Architectural Residences</h2>
+            <p className="featured-subtitle">Handpicked sanctuaries balanced in organic materials and refined geometry.</p>
           </div>
-          <Link to="/" className="featured-link">
-            View all listings <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
         <div className="properties-grid">
           {!loading && !error && filteredProperties.map((property) => (
@@ -388,7 +377,8 @@ export function Home() {
         <div className="features-container">
           <div className="features-header">
             <div className="features-label">Why UrbanNest</div>
-            <h2 className="features-title">Everything you need to find home</h2>
+            <h2 className="features-title">A calmer way to find home</h2>
+            <p className="features-subtitle">Useful tools, trusted data, and thoughtful details in one refined experience.</p>
           </div>
           <div className="features-grid">
             {FEATURES.map((feature, index) => (
@@ -404,63 +394,58 @@ export function Home() {
         </div>
       </section>
 
-      <section className="cta-section">
-        <div className="cta-card">
-          <div className="cta-content">
-            <h2 className="cta-title">Ready to list your property?</h2>
-            <p className="cta-desc">
-              Join 3,200+ agents and sellers using UrbanNest to connect with qualified buyers nationwide.
+      <section className="owner-showcase">
+        <div className="owner-showcase-card">
+          <div className="owner-showcase-content">
+            <span className="owner-showcase-kicker"><HomeIcon /> For Property Owners</span>
+            <h2 className="owner-showcase-title">Selling or Renting Your Property?</h2>
+            <p className="owner-showcase-description">
+              Present your Yangon property through UrbanNest with structured details, clear imagery, and an admin-reviewed listing.
             </p>
+            <div className="owner-showcase-actions">
+              <Link to="/property/add" className="owner-showcase-primary">
+                List Your Property <PlusCircle />
+              </Link>
+              <Link to="/contact" className="owner-showcase-secondary">Contact UrbanNest</Link>
+            </div>
           </div>
-          <div className="cta-buttons">
-            <Link to="/register" className="cta-btn-primary">Create Free Account</Link>
-            <Link to="/" className="cta-btn-secondary">Browse Listings</Link>
+          <div className="owner-showcase-benefits" aria-label="UrbanNest listing features">
+            <div className="owner-benefit">
+              <span><BadgeCheck /></span>
+              <div><strong>Admin Reviewed</strong><small>Listings are checked before publication</small></div>
+            </div>
+            <div className="owner-benefit">
+              <span><Camera /></span>
+              <div><strong>Property Imagery</strong><small>Upload photos directly from your device</small></div>
+            </div>
+            <div className="owner-benefit">
+              <span><ShieldCheck /></span>
+              <div><strong>Owner Controlled</strong><small>Manage your listing from your dashboard</small></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-grid">
-            <div>
-              <div className="footer-brand">
-                <span className="footer-brand-icon">
-                  <HomeIcon className="w-5 h-5" />
-                </span>
-                <span className="footer-brand-name">UrbanNest</span>
-              </div>
-              <p className="footer-brand-desc">
-                Your trusted partner in finding and managing real estate.
-              </p>
-            </div>
-            <div>
-              <h4 className="footer-col-title">Explore</h4>
-              <ul className="footer-links">
-                <li className="footer-link"><Link to="/">Homepage</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="footer-col-title">Sellers</h4>
-              <ul className="footer-links">
-                <li className="footer-link"><Link to="/property/add">List a Property</Link></li>
-                <li className="footer-link"><Link to="/user/my-properties">My Dashboard</Link></li>
-                <li className="footer-link"><Link to="/dashboard">Saved Favorites</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="footer-col-title">Company</h4>
-              <ul className="footer-links">
-                <li className="footer-link"><Link to="/about">About Us</Link></li>
-                <li className="footer-link"><Link to="/contact">Contact</Link></li>
-              </ul>
-            </div>
+      <footer className="home-footer">
+        <div className="home-footer-inner">
+          <div className="home-footer-top">
+            <Link to="/" className="home-footer-brand">
+              <span className="home-footer-logo"><HomeIcon /></span>
+              <span>UrbanNest Real Estate</span>
+            </Link>
+            <nav className="home-footer-nav" aria-label="Footer navigation">
+              <Link to="/">Home</Link>
+              <a href="#featured-properties">Properties</a>
+              <Link to="/contact">Contact</Link>
+              <Link to="/dashboard">Dashboard</Link>
+            </nav>
           </div>
-          <div className="footer-bottom">
-            <p className="footer-copyright">© 2026 UrbanNest, Inc. All rights reserved.</p>
-            <div className="footer-legal">
+          <div className="home-footer-bottom">
+            <p>© 2026 UrbanNest Real Estate. All rights reserved.</p>
+            <div className="home-footer-meta">
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>
-              <Link to="/cookies">Cookies</Link>
+              <span>Property discovery in Yangon, Myanmar.</span>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,9 +7,11 @@ import { NotificationsBell } from './NotificationsBell';
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === '/';
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${isHome ? ' home-navbar' : ''}`}>
       <div className="navbar-inner">
         <Link to="/" className="navbar-logo">
           <span className="navbar-logo-icon">
