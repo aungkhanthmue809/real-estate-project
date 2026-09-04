@@ -9,9 +9,10 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const usesShowcaseNavbar = isHome || location.pathname.startsWith('/property/');
 
   return (
-    <nav className={`navbar${isHome ? ' home-navbar' : ''}`}>
+    <nav className={`navbar${usesShowcaseNavbar ? ' home-navbar' : ''}${isHome ? ' navbar-home-route' : ''}`}>
       <div className="navbar-inner">
         <Link to="/" className="navbar-logo">
           <span className="navbar-logo-icon">
