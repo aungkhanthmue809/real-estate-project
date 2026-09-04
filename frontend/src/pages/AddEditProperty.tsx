@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, X, FileText, Home, Map, Camera, Building2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, FileText, Home, Map, Camera, Building2, MapPin, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { PropertyMap, type MapCoordinates } from '../components/PropertyMap';
@@ -219,6 +219,8 @@ export function AddEditProperty() {
   const featureLabels = FEATURES_EN;
   const isLand = formData.propertyType === 'LAND';
   const selectedPostingFee = postingFees.find((fee) => fee.propertyType === formData.propertyType);
+  const propertyTypeLabel = PROPERTY_TYPES.find((type) => type.value === formData.propertyType)?.label
+    ?? (formData.propertyType === 'TOWNHOUSE' ? 'Townhouse' : 'Property');
 
   const steps = [
     { id: 1, label: 'Basic Info', icon: Home },
@@ -404,7 +406,7 @@ export function AddEditProperty() {
   };
 
   const getProgressTransform = (): string => {
-    return `scaleX(${(currentStep - 1) / (steps.length - 1)})`;
+    return `scaleX(${currentStep / steps.length})`;
   };
 
   if (submitted) {
@@ -415,27 +417,19 @@ export function AddEditProperty() {
             <Check className="w-10 h-10 text-white" />
           </div>
           <h2 className="form-success-title">
-            Property Submitted!
+            {isEditing ? 'Property Updated!' : 'Property Submitted!'}
           </h2>
           <p className="form-success-desc">
-            Your property has been submitted for approval.
+            {isEditing ? 'Your property changes have been saved.' : 'Your property has been submitted for approval.'}
           </p>
-          <p className="form-success-desc" style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
-            After admin approval, your listing will appear in your ownership records.
-          </p>
+          {!isEditing && (
+            <p className="form-success-desc form-success-note">
+              After admin approval, your listing will appear in your ownership records.
+            </p>
+          )}
           <button
             onClick={() => navigate('/dashboard')}
-            style={{
-              padding: '14px 32px',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '15px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-            }}
+            className="form-success-button"
           >
             Go to Dashboard
           </button>
@@ -445,21 +439,24 @@ export function AddEditProperty() {
   }
 
   return (
-    <div className="form-page">
+    <div className="form-page form-showcase-page">
+      <div className="form-page-ambient" aria-hidden="true"><span /><span /><span /></div>
       <div className="form-container">
-        <button onClick={() => navigate(-1)} className="form-back-btn">
-          <ArrowLeft className="w-5 h-5" />
-          Back to Dashboard
-        </button>
-
-        <h1 className="form-page-title">
-          {isEditing
-            ? 'Edit Property'
-            : 'Add New Property'}
-        </h1>
-        <p className="form-page-subtitle">
-          Complete the form below to list your property on UrbanNest
-        </p>
+        <header className="form-page-heading">
+          <div>
+            <p className="form-page-eyebrow">Property listing workspace</p>
+            <h1 className="form-page-title">{isEditing ? 'Edit Your Property' : 'List Your Property'}</h1>
+            <p className="form-page-subtitle">
+              {isEditing
+                ? 'Review and update the information shown on your UrbanNest listing.'
+                : 'Complete each stage to submit your property for UrbanNest approval.'}
+            </p>
+          </div>
+          <button onClick={() => navigate(-1)} className="form-back-btn">
+            <ArrowLeft className="w-5 h-5" />
+            Back to Dashboard
+          </button>
+        </header>
         {isEditing && !propertiesLoading && !existing && (
           <p className="form-error">
             Property not found or you do not own it.
@@ -479,14 +476,16 @@ export function AddEditProperty() {
               <div className={`step-circle ${currentStep > step.id ? 'completed' : currentStep === step.id ? 'active' : ''}`}>
                 {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
               </div>
-              <span className={`step-label ${currentStep >= step.id ? 'active' : ''}`}>
-                {step.label}
+              <span className="step-copy">
+                <small className={currentStep >= step.id ? 'active' : ''}>Step 0{step.id}</small>
+                <span className={`step-label ${currentStep >= step.id ? 'active' : ''}`}>{step.label}</span>
               </span>
             </button>
           ))}
         </div>
 
-        <div className="form-card">
+        <div className="form-workspace">
+          <div className="form-card">
           <div onKeyDown={handleFormKeyDown}>
             <div className="form-card-body">
               {currentStep === 1 && (
@@ -519,26 +518,36 @@ export function AddEditProperty() {
                     {errors.title && <p className="form-error">{errors.title}</p>}
                   </div>
 
-                  <div className="form-grid-2">
+                  <div className="form-grid-2 form-basic-type-grid">
                     <div className="form-field">
                       <label className="form-label">
                         Property Type <span className="required">*</span>
                       </label>
-                      <select
-                        value={formData.propertyType}
-                        onChange={(e) => updateForm({ propertyType: e.target.value as PropertyType })}
-                        className={`form-select ${errors.propertyType ? 'error' : ''}`}
-                      >
-                        <option value="">Select Type</option>
+                      <div className={`property-type-grid ${errors.propertyType ? 'error' : ''}`}>
                         {formData.propertyType === 'TOWNHOUSE' && (
-                          <option value="TOWNHOUSE" disabled>Townhouse (legacy)</option>
+                          <button type="button" className="property-type-option active legacy" disabled>
+                            <Building2 /><strong>Townhouse</strong><small>Legacy property type</small>
+                          </button>
                         )}
-                        {PROPERTY_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
+                        {PROPERTY_TYPES.map((type) => {
+                          const fee = postingFees.find((item) => item.propertyType === type.value);
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => updateForm({ propertyType: type.value })}
+                              className={`property-type-option ${formData.propertyType === type.value ? 'active' : ''}`}
+                              aria-pressed={formData.propertyType === type.value}
+                            >
+                              <Building2 aria-hidden="true" />
+                              <strong>{type.label}</strong>
+                              {!isEditing && (
+                                <small>{postingFeesLoading ? 'Loading fee…' : fee ? formatMMKAmount(fee.feeAmount) : 'Fee unavailable'}</small>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                       {errors.propertyType && <p className="form-error">{errors.propertyType}</p>}
                     </div>
 
@@ -1200,13 +1209,57 @@ export function AddEditProperty() {
                   ) : (
                     <>
                       <Check className="w-5 h-5" />
-                      Submit Listing
+                      {isEditing ? 'Update Property' : 'Submit Listing'}
                     </>
                   )}
                 </button>
               )}
             </div>
           </div>
+        </div>
+
+          <aside className="form-preview-column" aria-label="Live property preview">
+            <div className="form-preview-label-row">
+              <span><ImageIcon /> Live Preview</span>
+              <small>Current details</small>
+            </div>
+            <article className="form-preview-card">
+              <div className="form-preview-image">
+                <img
+                  src={formData.imageUrl ? resolvePropertyImageUrl(formData.imageUrl) : '/property-placeholder.svg'}
+                  alt={formData.title ? `${formData.title} preview` : 'Property preview'}
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = '/property-placeholder.svg';
+                  }}
+                />
+                <div className="form-preview-badges">
+                  <span>{formData.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}</span>
+                  <span>{propertyTypeLabel}</span>
+                </div>
+                <div className="form-preview-price">
+                  <small>Listing Price</small>
+                  <strong>{formData.price ? formatPropertyPrice(Number(formData.price)) : 'Price not set'}</strong>
+                </div>
+              </div>
+              <div className="form-preview-body">
+                <h2>{formData.title || 'Your property title'}</h2>
+                <p className="form-preview-location"><MapPin /> {[formData.streetAddress, selectedTownship?.nameEn, formData.city].filter(Boolean).join(', ') || 'Location not entered'}</p>
+                <div className="form-preview-facts">
+                  <div><strong>{isLand ? '—' : formData.bedrooms}</strong><span>Bedrooms</span></div>
+                  <div><strong>{isLand ? '—' : formData.bathrooms}</strong><span>Baths</span></div>
+                  <div><strong>{formData.area || '—'}</strong><span>Sq Ft</span></div>
+                </div>
+                <p className="form-preview-description">{formData.description || 'Your property description will appear here as you complete the form.'}</p>
+                <div className={`form-preview-status ${formData.hasGrant ? 'has-grant' : ''}`}><ShieldCheck /><span>{formData.hasGrant ? 'Grant included' : 'Grant not selected'}</span><span>{formData.features.length} features</span></div>
+              </div>
+            </article>
+            <div className="form-stage-card">
+              <span>Current stage</span>
+              <strong>0{currentStep}. {steps[currentStep - 1].label}</strong>
+              <p>{currentStep < 4 ? 'Complete this section, then continue when ready.' : 'Review the entered information before submitting.'}</p>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
