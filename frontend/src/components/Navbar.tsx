@@ -9,7 +9,10 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const usesShowcaseNavbar = isHome || location.pathname.startsWith('/property/');
+  const usesShowcaseNavbar = isHome
+    || location.pathname.startsWith('/property/')
+    || location.pathname === '/login'
+    || location.pathname === '/register';
 
   return (
     <nav className={`navbar${usesShowcaseNavbar ? ' home-navbar' : ''}${isHome ? ' navbar-home-route' : ''}`}>
