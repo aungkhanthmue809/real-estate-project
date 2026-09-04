@@ -11,6 +11,8 @@ export function Navbar() {
   const isHome = location.pathname === '/';
   const usesShowcaseNavbar = isHome
     || location.pathname.startsWith('/property/')
+    || location.pathname === '/dashboard'
+    || location.pathname === '/user/my-properties'
     || location.pathname === '/login'
     || location.pathname === '/register';
 

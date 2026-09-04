@@ -2,6 +2,9 @@ import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
+  ArrowRight,
+  Bath,
+  BedDouble,
   Edit,
   Trash2,
   Heart,
@@ -18,6 +21,7 @@ import {
   X,
   Building2,
   Camera,
+  Ruler,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
@@ -29,7 +33,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const { properties, myProperties, deleteProperty } = useProperties();
+  const { properties, myProperties, deleteProperty, loading, error, refreshMyProperties } = useProperties();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'properties' | 'favorites'>('properties');
   const [showEditModal, setShowEditModal] = useState(false);
@@ -113,16 +117,103 @@ export function Dashboard() {
     }
   };
 
-  return (
-    <div className="dash-page">
-      <div className="dash-container">
-        <button className="dash-back-btn" onClick={() => navigate('/')}>
-          <ArrowLeft /> Back to Home
-        </button>
+  const getListingLabel = (status: string) => status === 'FOR_SALE' ? 'For Sale' : 'For Rent';
 
-        {/* Profile Hero */}
+  const renderPropertyCard = (property: (typeof properties)[number], isFavorite = false) => (
+    <article className="dash-property-card" key={property.id}>
+      <div className="dash-property-media">
+        {property.imageUrl ? (
+          <img src={resolvePropertyImageUrl(property.imageUrl)} alt={property.title} />
+        ) : (
+          <div className="dash-property-media-fallback"><Building2 /></div>
+        )}
+        <div className="dash-property-status">
+          {isFavorite ? (
+            <span className={`dash-badge ${property.status === 'FOR_SALE' ? 'approved' : 'pending'}`}>
+              {getListingLabel(property.status)}
+            </span>
+          ) : getStatusBadge(property.approvalStatus)}
+        </div>
+        <span className="dash-property-id">Listing #{property.id}</span>
+      </div>
+
+      <div className="dash-property-body">
+        <div>
+          <div className="dash-property-heading">
+            <div className="dash-property-copy">
+              <p className="dash-property-loc"><MapPin />{property.location}</p>
+              <h3>{property.title}</h3>
+            </div>
+            <div className="dash-property-price">
+              <strong>{formatPropertyPrice(property.price)}</strong>
+              <span>{getListingLabel(property.status)} / {property.propertyType.toLowerCase()}</span>
+            </div>
+          </div>
+
+          <div className="dash-property-facts">
+            <span><BedDouble /><strong>{property.bedrooms}</strong> Beds</span>
+            <span><Bath /><strong>{property.bathrooms}</strong> Baths</span>
+            <span><Ruler /><strong>{property.area.toLocaleString()}</strong> sqft</span>
+            <span><Building2 />{property.propertyType.charAt(0) + property.propertyType.slice(1).toLowerCase()}</span>
+          </div>
+        </div>
+
+        <div className="dash-property-footer">
+          <span className="dash-property-meta">
+            {isFavorite ? 'Saved to your favorites' : `${property.approvalStatus.charAt(0)}${property.approvalStatus.slice(1).toLowerCase()} listing`}
+          </span>
+          <div className="dash-row-actions">
+            {!isFavorite && (
+              <>
+                <Link to={`/property/edit/${property.id}`} className="dash-property-action secondary">
+                  <Edit /> Edit Listing
+                </Link>
+                <button onClick={() => handleDelete(property.id)} className="dash-property-action danger">
+                  <Trash2 /> Delete
+                </button>
+              </>
+            )}
+            {isFavorite && (
+              <button
+                onClick={() => toggleFavorite(String(property.id))}
+                className="dash-property-action danger"
+              >
+                <Trash2 /> Remove
+              </button>
+            )}
+            <Link to={`/property/${property.id}`} className="dash-property-action primary">
+              <Eye /> View Property
+            </Link>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+
+  return (
+    <div className="dash-page dashboard-showcase-page">
+      <div className="dash-ambient dash-ambient-one" />
+      <div className="dash-ambient dash-ambient-two" />
+      <div className="dash-ambient dash-ambient-three" />
+      <div className="dash-container">
+        <div className="dash-breadcrumb">
+          <button onClick={() => navigate('/')}><ArrowLeft /> Home</button>
+          <ArrowRight />
+          <span>User Workspace</span>
+          <ArrowRight />
+          <strong>My Properties</strong>
+        </div>
+
+        <header className="dash-page-header">
+          <div>
+            <span className="dash-kicker"><i />Owner workspace</span>
+            <h1>My Properties & Dashboard</h1>
+            <p>Manage your property listings, track moderation status, and keep your account details current.</p>
+          </div>
+          <Link to="/property/add" className="dash-add-btn"><Plus /> Add New Property</Link>
+        </header>
+
         <div className="dash-hero">
-          <div className="dash-cover" />
           <div className="dash-profile-row">
             <div className="dash-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
               <div className="dash-avatar">
@@ -154,27 +245,33 @@ export function Dashboard() {
                 <span className="dash-detail-item"><Mail />{user?.email}</span>
                 <span className="dash-detail-item"><Phone />{user?.phone || 'No phone added'}</span>
               </div>
+              <div className="dash-profile-controls">
+                <button className="dash-edit-profile-btn" onClick={openEditModal}>
+                  <User /> Edit Profile & Security
+                </button>
+              </div>
             </div>
-            <button className="dash-edit-profile-btn" onClick={openEditModal}>
-              <User /> Edit Profile
-            </button>
+            <div className="dash-profile-summary">
+              <span>Property portfolio</span>
+              <strong>{stats.total} {stats.total === 1 ? 'listing' : 'listings'}</strong>
+              <p>{stats.active} live / {stats.pending} in review / {stats.rejected} rejected</p>
+            </div>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="dash-stats-grid">
           <div className="dash-stat-card">
             <div className="dash-stat-icon blue"><Home /></div>
             <div>
               <div className="dash-stat-value">{stats.total}</div>
-              <div className="dash-stat-label">Total Posted</div>
+              <div className="dash-stat-label">Total Properties</div>
             </div>
           </div>
           <div className="dash-stat-card">
             <div className="dash-stat-icon green"><CheckCircle /></div>
             <div>
               <div className="dash-stat-value">{stats.active}</div>
-              <div className="dash-stat-label">Active Listings</div>
+              <div className="dash-stat-label">Approved & Live</div>
             </div>
           </div>
           <div className="dash-stat-card">
@@ -193,8 +290,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="dash-tabs">
+        <div className="dash-workspace-toolbar">
+          <div className="dash-tabs">
           <button
             className={`dash-tab ${activeTab === 'properties' ? 'active' : ''}`}
             onClick={() => setActiveTab('properties')}
@@ -207,22 +304,30 @@ export function Dashboard() {
           >
             <Heart /> Saved Favorites ({favoriteProperties.length})
           </button>
+          </div>
+          <div className="dash-toolbar-copy">
+            <strong>{activeTab === 'properties' ? 'Your property portfolio' : 'Saved properties'}</strong>
+            <span>{activeTab === 'properties' ? 'Review and manage every listing in one place.' : 'Return to properties you want to revisit.'}</span>
+          </div>
         </div>
 
         {activeTab === 'properties' ? (
           <>
-            <div className="dash-toolbar">
-              <div>
-                <div className="dash-toolbar-title">Listed Properties</div>
-                <div className="dash-toolbar-sub">Manage and track your posted listings</div>
+            {loading && myProperties.length === 0 ? (
+              <div className="dash-state-card">
+                <div className="dash-loader" />
+                <strong>Loading your properties</strong>
+                <span>Your workspace will be ready in a moment.</span>
               </div>
-              <Link to="/property/add" className="dash-add-btn">
-                <Plus /> Add New Property
-              </Link>
-            </div>
-
-            {myProperties.length === 0 ? (
-              <div className="dash-table">
+            ) : error && myProperties.length === 0 ? (
+              <div className="dash-state-card error">
+                <XCircle />
+                <strong>We couldn't load your properties</strong>
+                <span>{error}</span>
+                <button onClick={() => void refreshMyProperties()}>Try Again</button>
+              </div>
+            ) : myProperties.length === 0 ? (
+              <div className="dash-table dash-empty-shell">
                 <div className="dash-empty">
                   <div className="dash-empty-icon"><Building2 /></div>
                   <div className="dash-empty-title">No properties yet</div>
@@ -233,52 +338,11 @@ export function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="dash-table">
-                <div className="dash-table-header">
-                  <span>Property</span>
-                  <span>Price</span>
-                  <span>Type</span>
-                  <span>Status</span>
-                  <span>Actions</span>
-                </div>
-                {myProperties.map((property) => (
-                  <div className="dash-table-row" key={property.id}>
-                    <div className="dash-property-cell">
-                      {property.imageUrl ? (
-                        <img src={resolvePropertyImageUrl(property.imageUrl)} alt={property.title} className="dash-property-thumb" />
-                      ) : (
-                        <div className="dash-property-thumb-fallback"><Building2 /></div>
-                      )}
-                      <div className="dash-property-info">
-                        <div className="dash-property-name">{property.title}</div>
-                        <div className="dash-property-loc">
-                          <MapPin /> {property.location}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="dash-price">{formatPropertyPrice(property.price)}</div>
-                    <div>
-                      <span className="dash-type-chip">{property.propertyType.toLowerCase()}</span>
-                    </div>
-                    <div>{getStatusBadge(property.approvalStatus)}</div>
-                    <div className="dash-row-actions">
-                      <Link to={`/property/${property.id}`} className="dash-icon-btn" aria-label="View">
-                        <Eye />
-                      </Link>
-                      <Link to={`/property/edit/${property.id}`} className="dash-icon-btn" aria-label="Edit">
-                        <Edit />
-                      </Link>
-                      <button onClick={() => handleDelete(property.id)} className="dash-icon-btn danger" aria-label="Delete">
-                        <Trash2 />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <div className="dash-property-list">{myProperties.map((property) => renderPropertyCard(property))}</div>
             )}
           </>
         ) : (
-          <div className="dash-table">
+          <div className={favoriteProperties.length === 0 ? 'dash-table dash-empty-shell' : 'dash-property-list'}>
             {favoriteProperties.length === 0 ? (
               <div className="dash-empty">
                 <div className="dash-empty-icon"><Heart /></div>
@@ -289,56 +353,7 @@ export function Dashboard() {
                 </Link>
               </div>
             ) : (
-              <>
-                <div className="dash-table-header">
-                  <span>Property</span>
-                  <span>Price</span>
-                  <span>Type</span>
-                  <span>Status</span>
-                  <span>Actions</span>
-                </div>
-                {favoriteProperties.map((property) => (
-                  <div className="dash-table-row" key={property.id}>
-                    <div className="dash-property-cell">
-                      {property.imageUrl ? (
-                        <img src={resolvePropertyImageUrl(property.imageUrl)} alt={property.title} className="dash-property-thumb" />
-                      ) : (
-                        <div className="dash-property-thumb-fallback"><Building2 /></div>
-                      )}
-                      <div className="dash-property-info">
-                        <div className="dash-property-name">{property.title}</div>
-                        <div className="dash-property-loc">
-                          <MapPin /> {property.location}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="dash-price">{formatPropertyPrice(property.price)}</div>
-                    <div>
-                      <span className="dash-type-chip">
-                        {property.propertyType.charAt(0) + property.propertyType.slice(1).toLowerCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className={`dash-badge ${property.status === 'FOR_SALE' ? 'approved' : 'pending'}`}>
-                        {property.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}
-                      </span>
-                    </div>
-                    <div className="dash-row-actions">
-                      <Link to={`/property/${property.id}`} className="dash-icon-btn" aria-label="View">
-                        <Eye />
-                      </Link>
-                      <button
-                        onClick={() => toggleFavorite(String(property.id))}
-                        className="dash-icon-btn danger"
-                        aria-label="Remove from favorites"
-                        title="Remove from favorites"
-                      >
-                        <Trash2 />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </>
+              favoriteProperties.map((property) => renderPropertyCard(property, true))
             )}
           </div>
         )}
