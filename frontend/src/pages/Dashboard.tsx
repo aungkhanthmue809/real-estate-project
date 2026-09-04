@@ -190,6 +190,41 @@ export function Dashboard() {
     </article>
   );
 
+  const renderFavoriteCard = (property: (typeof properties)[number]) => (
+    <article className="dash-favorite-card" key={property.id}>
+      <div className="dash-favorite-media">
+        {property.imageUrl ? (
+          <img src={resolvePropertyImageUrl(property.imageUrl)} alt={property.title} />
+        ) : (
+          <div className="dash-property-media-fallback"><Building2 /></div>
+        )}
+        <span className="dash-favorite-listing-type">{getListingLabel(property.status)}</span>
+        <button
+          type="button"
+          className="dash-favorite-toggle"
+          onClick={() => toggleFavorite(String(property.id))}
+          aria-label={`Remove ${property.title} from favorites`}
+          title="Remove from favorites"
+        >
+          <Heart />
+        </button>
+        <p><MapPin />{property.location}</p>
+      </div>
+      <div className="dash-favorite-body">
+        <h3>{property.title}</h3>
+        <strong>{formatPropertyPrice(property.price)}</strong>
+        <div className="dash-favorite-facts">
+          <span><BedDouble />{property.bedrooms} Beds</span>
+          <span><Bath />{property.bathrooms} Baths</span>
+          <span><Ruler />{property.area.toLocaleString()} sqft</span>
+        </div>
+        <Link to={`/property/${property.id}`} className="dash-favorite-view">
+          View Property <ArrowRight />
+        </Link>
+      </div>
+    </article>
+  );
+
   return (
     <div className="dash-page dashboard-showcase-page">
       <div className="dash-ambient dash-ambient-one" />
@@ -201,19 +236,22 @@ export function Dashboard() {
           <ArrowRight />
           <span>User Workspace</span>
           <ArrowRight />
-          <strong>My Properties</strong>
+          <strong>{activeTab === 'properties' ? 'My Properties' : 'Saved Favorites'}</strong>
         </div>
 
         <header className="dash-page-header">
           <div>
-            <span className="dash-kicker"><i />Owner workspace</span>
-            <h1>My Properties & Dashboard</h1>
-            <p>Manage your property listings, track moderation status, and keep your account details current.</p>
+            <span className="dash-kicker"><i />{activeTab === 'properties' ? 'Owner workspace' : 'Your shortlist'}</span>
+            <h1>{activeTab === 'properties' ? 'My Properties & Dashboard' : 'Saved Properties'}</h1>
+            <p>{activeTab === 'properties'
+              ? 'Manage your property listings, track moderation status, and keep your account details current.'
+              : `Revisit ${favoriteProperties.length} ${favoriteProperties.length === 1 ? 'home' : 'homes'} saved to your personal shortlist.`}
+            </p>
           </div>
-          <Link to="/property/add" className="dash-add-btn"><Plus /> Add New Property</Link>
+          {activeTab === 'properties' && <Link to="/property/add" className="dash-add-btn"><Plus /> Add New Property</Link>}
         </header>
 
-        <div className="dash-hero">
+        {activeTab === 'properties' && <div className="dash-hero">
           <div className="dash-profile-row">
             <div className="dash-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
               <div className="dash-avatar">
@@ -257,9 +295,9 @@ export function Dashboard() {
               <p>{stats.active} live / {stats.pending} in review / {stats.rejected} rejected</p>
             </div>
           </div>
-        </div>
+        </div>}
 
-        <div className="dash-stats-grid">
+        {activeTab === 'properties' && <div className="dash-stats-grid">
           <div className="dash-stat-card">
             <div className="dash-stat-icon blue"><Home /></div>
             <div>
@@ -288,7 +326,7 @@ export function Dashboard() {
               <div className="dash-stat-label">Rejected</div>
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="dash-workspace-toolbar">
           <div className="dash-tabs">
@@ -342,8 +380,20 @@ export function Dashboard() {
             )}
           </>
         ) : (
-          <div className={favoriteProperties.length === 0 ? 'dash-table dash-empty-shell' : 'dash-property-list'}>
-            {favoriteProperties.length === 0 ? (
+          <div className={favoriteProperties.length === 0 ? 'dash-table dash-empty-shell' : 'dash-favorites-grid'}>
+            {loading && properties.length === 0 ? (
+              <div className="dash-state-card dash-favorites-state">
+                <div className="dash-loader" />
+                <strong>Loading saved properties</strong>
+                <span>Your shortlist will be ready in a moment.</span>
+              </div>
+            ) : error && properties.length === 0 ? (
+              <div className="dash-state-card dash-favorites-state error">
+                <XCircle />
+                <strong>We couldn't load your favorites</strong>
+                <span>{error}</span>
+              </div>
+            ) : favoriteProperties.length === 0 ? (
               <div className="dash-empty">
                 <div className="dash-empty-icon"><Heart /></div>
                 <div className="dash-empty-title">No saved favorites yet</div>
@@ -353,7 +403,7 @@ export function Dashboard() {
                 </Link>
               </div>
             ) : (
-              favoriteProperties.map((property) => renderPropertyCard(property, true))
+              favoriteProperties.map(renderFavoriteCard)
             )}
           </div>
         )}

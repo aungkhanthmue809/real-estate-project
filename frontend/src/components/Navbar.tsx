@@ -14,7 +14,8 @@ export function Navbar() {
     || location.pathname === '/dashboard'
     || location.pathname === '/user/my-properties'
     || location.pathname === '/login'
-    || location.pathname === '/register';
+    || location.pathname === '/register'
+    || location.pathname === '/contact';
 
   return (
     <nav className={`navbar${usesShowcaseNavbar ? ' home-navbar' : ''}${isHome ? ' navbar-home-route' : ''}`}>

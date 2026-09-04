@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Mail, Phone, MessageCircle, MapPin, Clock, Send, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, Clock, Home, Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react';
 import { contactMessageAPI } from '../utils/api';
 
 const CONTACT_METHODS = [
@@ -36,10 +37,7 @@ export function ContactUs() {
     setSubmitError('');
     try {
       await contactMessageAPI.create({
-        fullName: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim() || undefined,
-        message: form.message.trim(),
+        fullName: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() || undefined, message: form.message.trim(),
       });
       setSubmitted(true);
     } catch {
@@ -50,113 +48,89 @@ export function ContactUs() {
   };
 
   return (
-    <div className="contact-page">
+    <div className="contact-page contact-showcase-page">
+      <div className="contact-ambient contact-ambient-one" />
+      <div className="contact-ambient contact-ambient-two" />
+      <div className="contact-ambient contact-ambient-three" />
       <div className="contact-container">
-        {/* Hero */}
+        <nav className="contact-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/"><Home /> Home</Link><ArrowRight /><strong>Contact</strong>
+        </nav>
         <section className="contact-hero">
-          <span className="contact-hero-badge">Get in Touch</span>
-          <h1 className="contact-hero-title">We'd Love to Hear From You</h1>
-          <p className="contact-hero-sub">
-            Questions about a listing, managing your properties, or the platform itself — our team is here to help.
-          </p>
+          <span className="contact-hero-badge"><i />Get in touch</span>
+          <h1 className="contact-hero-title">Speak With UrbanNest</h1>
+          <p className="contact-hero-sub">Questions about a listing, managing your properties, or the platform itself? Send our team a message.</p>
         </section>
 
-        {/* Contact methods */}
-        <section className="contact-methods-grid">
-          {CONTACT_METHODS.map((method) => (
-            <div className="contact-method-card" key={method.label}>
-              <div className="contact-method-icon"><method.icon /></div>
-              <div className="contact-method-label">{method.label}</div>
-              <div className="contact-method-value">{method.value}</div>
-              <div className="contact-method-hint">{method.hint}</div>
-            </div>
-          ))}
-        </section>
-
-        {/* Form + Office hours */}
         <section className="contact-main">
           <div className="contact-form-card">
-            <h2 className="contact-form-title">Send Us a Message</h2>
-            <p className="contact-form-sub">Fill out the form and our team will review your message.</p>
-
+            <div className="contact-form-heading">
+              <span><Send /></span>
+              <div><h2 className="contact-form-title">Send Us a Message</h2><p className="contact-form-sub">Fill out the form and our team will review your message.</p></div>
+            </div>
             {submitted ? (
-              <div className="contact-success">
-                <CheckCircle2 />
-                <h3>Message Sent!</h3>
-                <p>Thank you, {form.name.trim()}. We've received your message.</p>
-              </div>
+              <div className="contact-success"><CheckCircle2 /><h3>Message Sent!</h3><p>We've received your message.</p></div>
             ) : (
               <form className="contact-form" onSubmit={handleSubmit} noValidate>
-                <div className="contact-field">
-                  <label>Full Name</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Your name"
-                  />
-                  {errors.name && <span className="contact-field-error">{errors.name}</span>}
+                <div className="contact-form-grid">
+                  <div className="contact-field">
+                    <label htmlFor="contact-name">Full Name</label>
+                    <input id="contact-name" type="text" value={form.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="Your name" aria-invalid={Boolean(errors.name)} />
+                    {errors.name && <span className="contact-field-error">{errors.name}</span>}
+                  </div>
+                  <div className="contact-field">
+                    <label htmlFor="contact-email">Email Address</label>
+                    <input id="contact-email" type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="you@example.com" aria-invalid={Boolean(errors.email)} />
+                    {errors.email && <span className="contact-field-error">{errors.email}</span>}
+                  </div>
                 </div>
                 <div className="contact-field">
-                  <label>Email Address</label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    placeholder="you@example.com"
-                  />
-                  {errors.email && <span className="contact-field-error">{errors.email}</span>}
+                  <label htmlFor="contact-phone">Phone <span>Optional</span></label>
+                  <input id="contact-phone" type="tel" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+95 9 ..." />
                 </div>
                 <div className="contact-field">
-                  <label>Phone (optional)</label>
-                  <input
-                    type="text"
-                    value={form.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    placeholder="+95 9 ..."
-                  />
-                </div>
-                <div className="contact-field">
-                  <label>Message</label>
-                  <textarea
-                    rows={5}
-                    value={form.message}
-                    onChange={(e) => handleChange('message', e.target.value)}
-                    placeholder="How can we help?"
-                  />
+                  <label htmlFor="contact-message">Message</label>
+                  <textarea id="contact-message" rows={5} value={form.message} onChange={(e) => handleChange('message', e.target.value)} placeholder="How can we help?" aria-invalid={Boolean(errors.message)} />
                   {errors.message && <span className="contact-field-error">{errors.message}</span>}
                 </div>
-                {submitError && (
-                  <div className="contact-submit-error" role="alert">{submitError}</div>
-                )}
-                <button type="submit" className="contact-submit-btn" disabled={submitting}>
-                  <Send /> {submitting ? 'Sending...' : 'Send Message'}
-                </button>
+                {submitError && <div className="contact-submit-error" role="alert">{submitError}</div>}
+                <button type="submit" className="contact-submit-btn" disabled={submitting}><Send /> {submitting ? 'Sending...' : 'Send Us a Message'}</button>
               </form>
             )}
           </div>
 
-          <div className="contact-side">
-            <div className="contact-side-card">
-              <div className="contact-side-icon"><Clock /></div>
-              <h3>Office Hours</h3>
+          <aside className="contact-side">
+            <div className="contact-side-card contact-details-card">
+              <span className="contact-side-kicker">Contact details</span><h2>UrbanNest Team</h2>
+              <div className="contact-details-list">
+                {CONTACT_METHODS.map((method) => (
+                  <div className="contact-detail" key={method.label}>
+                    <span className="contact-side-icon"><method.icon /></span>
+                    <div><small>{method.label}</small><strong>{method.value}</strong><p>{method.hint}</p></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="contact-side-card contact-hours-card">
+              <div className="contact-hours-heading"><span className="contact-side-icon"><Clock /></span><h3>Office Hours</h3></div>
               <ul className="contact-hours">
-                <li><span>Monday – Friday</span><span>9:00 AM – 6:00 PM</span></li>
-                <li><span>Saturday</span><span>9:00 AM – 1:00 PM</span></li>
-                <li><span>Sunday</span><span>Closed</span></li>
+                <li><span>Monday – Friday</span><span>9:00 AM – 6:00 PM</span></li><li><span>Saturday</span><span>9:00 AM – 1:00 PM</span></li><li><span>Sunday</span><span>Closed</span></li>
               </ul>
             </div>
-            <div className="contact-side-card">
-              <div className="contact-side-icon"><MapPin /></div>
-              <h3>Our Office</h3>
-              <p className="contact-office-desc">
-                UrbanNest Real Estate Co., Ltd.<br />
-                Yangon, Myanmar
-              </p>
-            </div>
-          </div>
+          </aside>
         </section>
       </div>
+
+      <footer className="contact-footer">
+        <div className="contact-footer-top">
+          <Link to="/" className="contact-footer-brand"><span><Home /></span>UrbanNest Real Estate</Link>
+          <nav aria-label="Footer navigation"><Link to="/">Home</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link></nav>
+        </div>
+        <div className="contact-footer-bottom">
+          <span>© {new Date().getFullYear()} UrbanNest. All rights reserved.</span>
+          <nav aria-label="Legal navigation"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></nav>
+        </div>
+      </footer>
     </div>
   );
 }
