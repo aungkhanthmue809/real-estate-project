@@ -111,7 +111,12 @@ export function NotificationsBell() {
       {open && (
         <div className="notif-panel">
           <div className="notif-panel-header">
-            <span className="notif-panel-title">Notifications</span>
+            <div>
+              <span className="notif-panel-title">Notifications</span>
+              <span className="notif-panel-subtitle">
+                {unreadCount > 0 ? `${unreadCount} unread` : 'You are all caught up'}
+              </span>
+            </div>
             {unreadCount > 0 && (
               <button className="notif-clear" onClick={() => void markAllRead()}>
                 <CheckCircle /> Mark all as read
@@ -142,7 +147,10 @@ export function NotificationsBell() {
                       {getStatusIcon(notification.type)}
                     </div>
                     <div className="notif-content">
-                      <p className="notif-title">{notification.title}</p>
+                      <div className="notif-title-row">
+                        <p className="notif-title">{notification.title}</p>
+                        {!notification.isRead && <span className="notif-unread-dot" aria-label="Unread" />}
+                      </div>
                       <p className="notif-body">{notification.message}</p>
                       <span className="notif-time">{formatRelativeTime(notification.createdAt)}</span>
                     </div>

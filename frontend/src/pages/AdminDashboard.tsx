@@ -1,58 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import {
-  Users,
-  Home,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  MapPin,
-  Heart,
-  BarChart3,
-  Bed,
-  Bath,
-  Square,
-  Mail,
-  X,
-} from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Bath, Bed, Building2, CheckCircle, Clock, Eye, Home, LogOut, Mail, MapPin, Settings, Square, Users, X, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { useNotifications } from '../contexts/NotificationsContext';
-import { AdminSidebar } from '../components/AdminSidebar';
 import { NotificationsBell } from '../components/NotificationsBell';
 import { adminAPI, propertyPostingFeeAPI } from '../utils/api';
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import { formatMMKAmount, formatPropertyPrice } from '../utils/price';
 import type { ContactMessage, Property, PropertyPostingFee, PropertyType } from '../types';
 
-const formatDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch {
-    return iso;
-  }
-};
-
-const formatDateTime = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
-};
+type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+const formatDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return iso; } };
+const formatDateTime = (iso: string) => { try { return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+const typeLabel = (type: PropertyType) => type.charAt(0) + type.slice(1).toLowerCase();
 
 export function AdminDashboard() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  const { favoriteIds } = useFavorites();
+  const { user, logout } = useAuth();
   const { refreshProperties } = useProperties();
   const { newlyReceived } = useNotifications();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -60,6 +26,7 @@ export function AdminDashboard() {
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [reviewing, setReviewing] = useState<Property | null>(null);
+  const [moderationStatus, setModerationStatus] = useState<ModerationStatus>('PENDING');
   const [postingFees, setPostingFees] = useState<PropertyPostingFee[]>([]);
   const [feeDrafts, setFeeDrafts] = useState<Partial<Record<PropertyType, string>>>({});
   const [editingFee, setEditingFee] = useState<PropertyType | null>(null);
@@ -74,630 +41,137 @@ export function AdminDashboard() {
   const handledFocusRequestRef = useRef<string | null>(null);
 
   const focusType = searchParams.get('focus');
-  const rawFocusId = focusType === 'property'
-    ? searchParams.get('propertyId')
-    : focusType === 'contact'
-      ? searchParams.get('messageId')
-      : null;
-  const focusTargetId = rawFocusId && /^[1-9]\d*$/.test(rawFocusId)
-    ? `admin-${focusType}-${rawFocusId}`
-    : null;
+  const rawFocusId = focusType === 'property' ? searchParams.get('propertyId') : focusType === 'contact' ? searchParams.get('messageId') : null;
+  const focusTargetId = rawFocusId && /^[1-9]\d*$/.test(rawFocusId) ? `admin-${focusType}-${rawFocusId}` : null;
 
   const loadAdminProperties = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
-    try {
-      const { data } = await adminAPI.getAllProperties();
-      setProperties(data);
-      setError('');
-    } catch {
-      setError('Unable to load properties.');
-    } finally {
-      if (showLoading) setLoading(false);
-    }
+    try { const { data } = await adminAPI.getAllProperties(); setProperties(data); setError(''); }
+    catch { setError('Unable to load properties.'); }
+    finally { if (showLoading) setLoading(false); }
   }, []);
-
-  useEffect(() => {
-    void loadAdminProperties(true);
-  }, [loadAdminProperties]);
-
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
-    const approvalRequested = newlyReceived.some(
-      (notification) => notification.type === 'PROPERTY_APPROVAL_REQUESTED',
-    );
-    if (approvalRequested) void loadAdminProperties();
-  }, [loadAdminProperties, newlyReceived, user?.role]);
-
   const loadContactMessages = useCallback(async (showLoading = false) => {
     if (showLoading) setMessagesLoading(true);
-    try {
-      const { data } = await adminAPI.getContactMessages();
-      setContactMessages(data);
-      setMessagesError('');
-    } catch {
-      setMessagesError('Unable to load contact messages.');
-    } finally {
-      if (showLoading) setMessagesLoading(false);
-    }
+    try { const { data } = await adminAPI.getContactMessages(); setContactMessages(data); setMessagesError(''); }
+    catch { setMessagesError('Unable to load contact messages.'); }
+    finally { if (showLoading) setMessagesLoading(false); }
   }, []);
 
+  useEffect(() => { void loadAdminProperties(true); }, [loadAdminProperties]);
+  useEffect(() => { void loadContactMessages(true); }, [loadContactMessages]);
   useEffect(() => {
-    void loadContactMessages(true);
-  }, [loadContactMessages]);
+    if (user?.role === 'ADMIN' && newlyReceived.some((item) => item.type === 'PROPERTY_APPROVAL_REQUESTED')) void loadAdminProperties();
+    if (user?.role === 'ADMIN' && newlyReceived.some((item) => item.type === 'CONTACT_MESSAGE_RECEIVED')) void loadContactMessages();
+  }, [loadAdminProperties, loadContactMessages, newlyReceived, user?.role]);
+  useEffect(() => {
+    let active = true;
+    propertyPostingFeeAPI.getAll().then(({ data }) => {
+      if (!active) return;
+      setPostingFees(data);
+      setFeeDrafts(Object.fromEntries(data.map((fee) => [fee.propertyType, String(fee.feeAmount)])));
+    }).catch(() => { if (active) setFeeError('Unable to load property posting fees.'); })
+      .finally(() => { if (active) setFeeLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  const pending = properties.filter((item) => item.approvalStatus === 'PENDING');
+  const approved = properties.filter((item) => item.approvalStatus === 'APPROVED');
+  const rejected = properties.filter((item) => item.approvalStatus === 'REJECTED');
+  const visibleProperties = properties.filter((item) => item.approvalStatus === moderationStatus).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const recentlyProcessed = [...approved, ...rejected].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 4);
+  const initial = (name: string) => (name || 'U').charAt(0).toUpperCase();
+  const counts: Record<ModerationStatus, number> = { PENDING: pending.length, APPROVED: approved.length, REJECTED: rejected.length };
+  const stats = [
+    { icon: Clock, label: 'Pending Listings', value: pending.length, meta: 'Awaiting moderation', tone: 'amber' },
+    { icon: CheckCircle, label: 'Approved Listings', value: approved.length, meta: 'Live property records', tone: 'green' },
+    { icon: XCircle, label: 'Rejected Listings', value: rejected.length, meta: 'Declined submissions', tone: 'red' },
+    { icon: Home, label: 'Total Properties', value: properties.length, meta: 'All submitted listings', tone: 'neutral' },
+  ];
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
-    const contactReceived = newlyReceived.some(
-      (notification) => notification.type === 'CONTACT_MESSAGE_RECEIVED',
-    );
-    if (contactReceived) void loadContactMessages();
-  }, [loadContactMessages, newlyReceived, user?.role]);
-
+    if (focusType !== 'property' || !rawFocusId || loading) return;
+    const target = properties.find((item) => item.id === Number(rawFocusId));
+    if (target) setModerationStatus(target.approvalStatus);
+  }, [focusType, loading, properties, rawFocusId]);
   useEffect(() => {
-    if (!focusTargetId) {
-      handledFocusRequestRef.current = null;
-      setFocusedTargetId(null);
-      return;
-    }
-
-    const relevantDataLoading = focusType === 'property' ? loading : messagesLoading;
-    if (relevantDataLoading || handledFocusRequestRef.current === focusTargetId) return;
-
+    if (!focusTargetId) { handledFocusRequestRef.current = null; setFocusedTargetId(null); return; }
+    if ((focusType === 'property' ? loading : messagesLoading) || handledFocusRequestRef.current === focusTargetId) return;
     const target = document.getElementById(focusTargetId);
-    if (!target) {
-      setFocusedTargetId(null);
-      return;
-    }
-
+    if (!target) return;
     handledFocusRequestRef.current = focusTargetId;
     setFocusedTargetId(focusTargetId);
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     target.focus({ preventScroll: true });
+    const timeout = window.setTimeout(() => setFocusedTargetId((current) => current === focusTargetId ? null : current), 2800);
+    return () => window.clearTimeout(timeout);
+  }, [contactMessages, focusTargetId, focusType, loading, messagesLoading, moderationStatus, properties]);
 
-    const highlightTimeout = window.setTimeout(() => {
-      setFocusedTargetId((current) => (current === focusTargetId ? null : current));
-    }, 2800);
-
-    return () => window.clearTimeout(highlightTimeout);
-  }, [contactMessages, focusTargetId, focusType, loading, messagesLoading, properties]);
-
-  useEffect(() => {
-    let active = true;
-
-    propertyPostingFeeAPI.getAll()
-      .then(({ data }) => {
-        if (!active) return;
-        setPostingFees(data);
-        setFeeDrafts(Object.fromEntries(
-          data.map((fee) => [fee.propertyType, String(fee.feeAmount)]),
-        ));
-      })
-      .catch(() => {
-        if (active) setFeeError('Unable to load property posting fees.');
-      })
-      .finally(() => {
-        if (active) setFeeLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const pending = properties.filter((p) => p.approvalStatus === 'PENDING');
-  const approved = properties
-    .filter((p) => p.approvalStatus === 'APPROVED')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const recentlyAdded = [...properties]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
-
-  const initial = (name: string) => (name || 'U').charAt(0).toUpperCase();
-
-  const stats = [
-    { icon: Home, label: 'Total Properties', value: properties.length.toString(), trend: '+12% this month', color: 'green' },
-    { icon: Users, label: 'Total Users', value: '5', trend: '+5 this week', color: 'blue' },
-    { icon: Clock, label: 'Pending Approvals', value: pending.length.toString(), trend: `${pending.length} awaiting review`, color: 'amber', urgent: true },
-    { icon: Heart, label: 'Total Favorites', value: favoriteIds.length.toString(), trend: '+8% this week', color: 'violet' },
-  ];
-
-  const handleApprove = async (id: number) => {
-    setUpdatingId(id);
-    setError('');
+  const updateStatus = async (id: number, status: 'APPROVED' | 'REJECTED') => {
+    setUpdatingId(id); setError('');
     try {
-      await adminAPI.approve(id);
-      setProperties((prev) => prev.map((property) => (
-        property.id === id ? { ...property, approvalStatus: 'APPROVED' } : property
-      )));
-      refreshProperties().catch(() => undefined);
-      setReviewing(null);
-    } catch {
-      setError('Unable to approve the property.');
-    } finally {
-      setUpdatingId(null);
-    }
+      if (status === 'APPROVED') await adminAPI.approve(id); else await adminAPI.reject(id);
+      setProperties((current) => current.map((item) => item.id === id ? { ...item, approvalStatus: status } : item));
+      refreshProperties().catch(() => undefined); setReviewing(null);
+    } catch { setError(`Unable to ${status === 'APPROVED' ? 'approve' : 'reject'} the property.`); }
+    finally { setUpdatingId(null); }
   };
-
-  const handleReject = async (id: number) => {
-    setUpdatingId(id);
-    setError('');
-    try {
-      await adminAPI.reject(id);
-      setProperties((prev) => prev.map((property) => (
-        property.id === id ? { ...property, approvalStatus: 'REJECTED' } : property
-      )));
-      refreshProperties().catch(() => undefined);
-      setReviewing(null);
-    } catch {
-      setError('Unable to reject the property.');
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const startEditingFee = (fee: PropertyPostingFee) => {
-    setEditingFee(fee.propertyType);
-    setFeeDrafts((current) => ({ ...current, [fee.propertyType]: String(fee.feeAmount) }));
-    setFeeMessage('');
-    setFeeError('');
-  };
-
-  const cancelEditingFee = (fee: PropertyPostingFee) => {
-    setFeeDrafts((current) => ({ ...current, [fee.propertyType]: String(fee.feeAmount) }));
-    setEditingFee(null);
-    setFeeError('');
-  };
-
+  const startEditingFee = (fee: PropertyPostingFee) => { setEditingFee(fee.propertyType); setFeeDrafts((current) => ({ ...current, [fee.propertyType]: String(fee.feeAmount) })); setFeeMessage(''); setFeeError(''); };
+  const cancelEditingFee = (fee: PropertyPostingFee) => { setFeeDrafts((current) => ({ ...current, [fee.propertyType]: String(fee.feeAmount) })); setEditingFee(null); setFeeError(''); };
   const savePostingFee = async (propertyType: PropertyType) => {
     const draft = feeDrafts[propertyType]?.trim() ?? '';
-    if (!/^\d+$/.test(draft) || Number(draft) > 999_999_999_999) {
-      setFeeError('Fee must be a non-negative whole MMK amount up to 999,999,999,999.');
-      return;
-    }
-
-    setSavingFee(propertyType);
-    setFeeMessage('');
-    setFeeError('');
+    if (!/^\d+$/.test(draft) || Number(draft) > 999_999_999_999) { setFeeError('Fee must be a non-negative whole MMK amount up to 999,999,999,999.'); return; }
+    setSavingFee(propertyType); setFeeMessage(''); setFeeError('');
     try {
       const { data } = await adminAPI.updatePostingFee(propertyType, Number(draft));
-      setPostingFees((current) => current.map((fee) => (
-        fee.propertyType === propertyType ? data : fee
-      )));
+      setPostingFees((current) => current.map((fee) => fee.propertyType === propertyType ? data : fee));
       setFeeDrafts((current) => ({ ...current, [propertyType]: String(data.feeAmount) }));
-      setEditingFee(null);
-      setFeeMessage(`${propertyType.charAt(0) + propertyType.slice(1).toLowerCase()} fee updated.`);
-    } catch {
-      setFeeError('Unable to update the posting fee. Please try again.');
-    } finally {
-      setSavingFee(null);
-    }
+      setEditingFee(null); setFeeMessage(`${typeLabel(propertyType)} fee updated.`);
+    } catch { setFeeError('Unable to update the posting fee. Please try again.'); }
+    finally { setSavingFee(null); }
   };
-
-  const statusBadge = (status: Property['approvalStatus']) => (
-    <span
-      className={`dash-badge ${
-        status === 'APPROVED' ? 'approved'
-        : status === 'PENDING' ? 'pending' : 'rejected'
-      }`}
-    >
-      {status.charAt(0) + status.slice(1).toLowerCase()}
-    </span>
-  );
+  const handleLogout = () => { logout(); navigate('/'); };
 
   return (
-    <div className="admin-page">
-      <div className="admin-panel-topbar">
-        <div className="admin-panel-brand">
-          <span className="admin-panel-logo"><Home /></span>
-          <span className="admin-panel-brand-name">UrbanNest</span>
-          <span className="admin-panel-brand-sub">Admin Panel</span>
-        </div>
-        <div className="admin-panel-top-actions">
-          <NotificationsBell />
-          <div className="admin-panel-profile">
-            <div className="admin-panel-avatar">
-              {user?.avatar ? <img src={user.avatar} alt={user.username} /> : initial(user?.username || 'A')}
-            </div>
-            <span>{user?.username || 'admin'}</span>
-          </div>
-        </div>
-      </div>
+    <div className="admin-page admin-showcase-page admin-cockpit">
+      <div className="admin-ambient admin-ambient-one" /><div className="admin-ambient admin-ambient-two" /><div className="admin-ambient admin-ambient-three" />
+      <header className="admin-cockpit-topbar"><div className="admin-cockpit-topbar-inner">
+        <Link to="/admin/dashboard" className="admin-cockpit-brand"><span className="admin-cockpit-logo"><Home /></span><span><strong>UrbanNest</strong><small>Admin Workspace</small></span></Link>
+        <nav className="admin-cockpit-nav" aria-label="Admin navigation"><Link to="/admin/dashboard" className="active">Overview</Link><Link to="/admin/manage-all?tab=properties">Properties</Link><Link to="/admin/manage-all?tab=users">Users</Link></nav>
+        <div className="admin-cockpit-account"><span className="admin-console-state"><i />Console active</span><NotificationsBell /><div className="admin-cockpit-identity"><span className="admin-cockpit-avatar">{user?.avatar ? <img src={user.avatar} alt={user.username} /> : initial(user?.username || 'A')}</span><span><strong>{user?.username || 'admin'}</strong><small>Administrator</small></span></div><button type="button" className="admin-cockpit-logout" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut /></button></div>
+      </div></header>
 
-      <div className="adm-layout admin-panel-layout">
-        <AdminSidebar active="dashboard" />
+      <main className="admin-cockpit-main">
+        <section className="admin-cockpit-intro"><div><span className="admin-header-kicker"><i />Yangon property registry</span><h1>Moderation &amp; Operations</h1><p>Review property submissions, manage posting fees, and monitor incoming contact messages from one operational workspace.</p></div><div className="admin-cockpit-toolbar"><Link to="/admin/manage-all?tab=properties"><Building2 />Manage Properties</Link><Link to="/admin/manage-all?tab=users"><Users />Manage Users</Link><Link to="/"><Home />Main Site</Link></div></section>
+        {(loading || error) && <div className={`admin-cockpit-notice${error ? ' error' : ''}`}>{loading ? 'Loading the property workspace...' : error}</div>}
+        <section className="admin-cockpit-metrics" aria-label="Property metrics">{stats.map((stat) => <article key={stat.label} className={`admin-cockpit-metric ${stat.tone}`}><div><span>{stat.label}</span><span className="admin-cockpit-metric-icon"><stat.icon /></span></div><strong>{stat.value}</strong><small>{stat.meta}</small></article>)}</section>
 
-        <main className="adm-main">
-          <div className="adm-content admin-dash-content">
-            <div className="adm-mobile-tabs">
-              <Link to="/admin/dashboard" className="adm-mobile-tab active">
-                <BarChart3 /> Dashboard
-              </Link>
-              <Link to="/admin/manage-all?tab=properties" className="adm-mobile-tab">
-                <Home /> Properties
-              </Link>
-              <Link to="/admin/manage-all?tab=users" className="adm-mobile-tab">
-                <Users /> Users
-              </Link>
-            </div>
-
-            <div className="admin-header">
-              <div>
-                <div className="admin-header-title">Dashboard</div>
-                <div className="admin-header-sub">
-                  Welcome back, {user?.username}! Here's what's happening today.
-                </div>
-              </div>
-            </div>
-
-            {(loading || error) && (
-              <div className="admin-header-sub">{loading ? 'Loading properties...' : error}</div>
-            )}
-
-            <div className="admin-stats-grid">
-              {stats.map((stat) => (
-                <div key={stat.label} className={`admin-stat-card ${stat.urgent ? 'urgent' : ''}`}>
-                  <div className={`admin-stat-icon ${stat.color}`}>
-                    <stat.icon />
-                  </div>
-                  <div>
-                    <div className="admin-stat-value">{stat.value}</div>
-                    <div className="admin-stat-label">{stat.label}</div>
-                    <div className={`admin-stat-trend ${stat.urgent ? 'urgent' : ''}`}>{stat.trend}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="admin-layout">
-              <div className="admin-card">
-                <div className="admin-card-header">
-                  <span className="admin-card-title">Pending Approvals</span>
-                  <span className="admin-card-badge">{pending.length} pending</span>
-                </div>
-                {pending.length === 0 ? (
-                  <div className="admin-empty">
-                    <div className="admin-empty-icon"><CheckCircle /></div>
-                    <div className="admin-empty-text">All caught up! No pending approvals.</div>
-                  </div>
-                ) : (
-                  <div className="adm-table-wrap">
-                    <table className="adm-table">
-                      <thead>
-                        <tr>
-                          <th>Property</th>
-                          <th>Location</th>
-                          <th style={{ textAlign: 'right' }}>Price</th>
-                          <th>Owner</th>
-                          <th>Submitted</th>
-                          <th style={{ textAlign: 'right' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pending.map((property) => (
-                          <tr
-                            id={`admin-property-${property.id}`}
-                            key={property.id}
-                            tabIndex={-1}
-                            className={focusedTargetId === `admin-property-${property.id}` ? 'admin-focus-highlight' : undefined}
-                          >
-                            <td>
-                              <div className="adm-property-cell">
-                                <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
-                                <div className="adm-property-name">{property.title}</div>
-                              </div>
-                            </td>
-                            <td>{property.location}</td>
-                            <td className="adm-price">{formatPropertyPrice(property.price)}</td>
-                            <td className="admin-cell-owner">{property.owner}</td>
-                            <td className="admin-cell-date">{formatDate(property.createdAt)}</td>
-                            <td>
-                              <div className="admin-pending-actions">
-                                <button onClick={() => handleApprove(property.id)} className="admin-btn-approve" disabled={updatingId === property.id}>
-                                  <CheckCircle /> Approve
-                                </button>
-                                <button onClick={() => handleReject(property.id)} className="admin-btn-reject" disabled={updatingId === property.id}>
-                                  <XCircle /> Reject
-                                </button>
-                                <button onClick={() => setReviewing(property)} className="admin-btn-view" aria-label="Review details" title="Review details">
-                                  <Eye />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-
-              <div className="admin-card">
-                <div className="admin-card-header">
-                  <span className="admin-card-title">Recently Approved</span>
-                </div>
-                {approved.length === 0 ? (
-                  <div className="admin-empty">
-                    <div className="admin-empty-icon"><CheckCircle /></div>
-                    <div className="admin-empty-text">No approved listings yet.</div>
-                  </div>
-                ) : (
-                  <div className="admin-recent-list">
-                    {approved.slice(0, 4).map((property) => (
-                      <div
-                        id={`admin-property-${property.id}`}
-                        className={`admin-recent-item${focusedTargetId === `admin-property-${property.id}` ? ' admin-focus-highlight' : ''}`}
-                        key={property.id}
-                        tabIndex={-1}
-                      >
-                        <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="admin-recent-thumb" />
-                        <div className="admin-recent-info">
-                          <div className="admin-recent-name">{property.title}</div>
-                          <div className="admin-recent-loc">
-                            <MapPin style={{ width: 12, height: 12, verticalAlign: 'middle' }} /> {property.location}
-                          </div>
-                        </div>
-                        <CheckCircle className="admin-recent-check" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="admin-card admin-recently-card">
-              <div className="admin-card-header">
-                <span className="admin-card-title">Recently Added Properties</span>
-              </div>
-              <div className="adm-table-wrap">
-                <table className="adm-table">
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Location</th>
-                      <th style={{ textAlign: 'right' }}>Price</th>
-                      <th>Status</th>
-                      <th>Added</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentlyAdded.map((property) => (
-                      <tr key={property.id}>
-                        <td>
-                          <div className="adm-property-cell">
-                            <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
-                            <div className="adm-property-name">{property.title}</div>
-                          </div>
-                        </td>
-                        <td>{property.location}</td>
-                        <td className="adm-price">{formatPropertyPrice(property.price)}</td>
-                        <td>{statusBadge(property.approvalStatus)}</td>
-                        <td className="admin-cell-date">{formatDate(property.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <section className="admin-card admin-contact-card" aria-labelledby="contact-messages-title">
-              <div className="admin-card-header">
-                <div>
-                  <div id="contact-messages-title" className="admin-card-title">Contact Messages</div>
-                  <div className="admin-contact-subtitle">Messages submitted through the public Contact page.</div>
-                </div>
-                {!messagesLoading && !messagesError && (
-                  <span className="admin-card-badge">{contactMessages.length} total</span>
-                )}
-              </div>
-              {messagesLoading ? (
-                <div className="admin-contact-status">Loading contact messages...</div>
-              ) : messagesError ? (
-                <div className="admin-contact-status error">{messagesError}</div>
-              ) : contactMessages.length === 0 ? (
-                <div className="admin-empty">
-                  <div className="admin-empty-icon"><Mail /></div>
-                  <div className="admin-empty-text">No contact messages yet.</div>
-                </div>
-              ) : (
-                <div className="admin-contact-list">
-                  {contactMessages.map((contactMessage) => (
-                    <article
-                      id={`admin-contact-${contactMessage.id}`}
-                      className={`admin-contact-message${focusedTargetId === `admin-contact-${contactMessage.id}` ? ' admin-focus-highlight' : ''}`}
-                      key={contactMessage.id}
-                      tabIndex={-1}
-                    >
-                      <div className="admin-contact-heading">
-                        <div>
-                          <div className="admin-contact-name">{contactMessage.fullName}</div>
-                          <div className="admin-contact-details">
-                            <span>{contactMessage.email}</span>
-                            <span>{contactMessage.phone || 'No phone provided'}</span>
-                          </div>
-                        </div>
-                        <time className="admin-contact-time" dateTime={contactMessage.createdAt}>
-                          {formatDateTime(contactMessage.createdAt)}
-                        </time>
-                      </div>
-                      <p className="admin-contact-body">{contactMessage.message}</p>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="admin-card admin-fees-card" aria-labelledby="posting-fees-title">
-              <div className="admin-card-header">
-                <div>
-                  <div id="posting-fees-title" className="admin-card-title">Property Posting Fees</div>
-                  <div className="admin-fees-subtitle">Configure the informational fee shown for new property submissions.</div>
-                </div>
-              </div>
-              {feeLoading ? (
-                <div className="admin-fees-status">Loading posting fees...</div>
-              ) : postingFees.length === 0 ? (
-                <div className="admin-fees-status error">{feeError || 'No posting fees are configured.'}</div>
-              ) : (
-                <div className="admin-fee-list">
-                  {postingFees.map((fee) => (
-                    <div className="admin-fee-row" key={fee.propertyType}>
-                      <div>
-                        <div className="admin-fee-type">
-                          {fee.propertyType.charAt(0) + fee.propertyType.slice(1).toLowerCase()}
-                        </div>
-                        {editingFee !== fee.propertyType && (
-                          <div className="admin-fee-amount">{formatMMKAmount(fee.feeAmount)}</div>
-                        )}
-                      </div>
-                      {editingFee === fee.propertyType ? (
-                        <div className="admin-fee-editor">
-                          <div className="admin-fee-input-wrap">
-                            <span>MMK</span>
-                            <input
-                              type="number"
-                              min="0"
-                              max="999999999999"
-                              step="1"
-                              inputMode="numeric"
-                              value={feeDrafts[fee.propertyType] ?? ''}
-                              onChange={(event) => setFeeDrafts((current) => ({
-                                ...current,
-                                [fee.propertyType]: event.target.value,
-                              }))}
-                              aria-label={`${fee.propertyType} posting fee`}
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            className="admin-fee-save"
-                            onClick={() => savePostingFee(fee.propertyType)}
-                            disabled={savingFee === fee.propertyType}
-                          >
-                            {savingFee === fee.propertyType ? 'Saving...' : 'Save'}
-                          </button>
-                          <button type="button" className="admin-fee-cancel" onClick={() => cancelEditingFee(fee)}>
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button type="button" className="admin-fee-edit" onClick={() => startEditingFee(fee)}>
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {(feeMessage || feeError) && postingFees.length > 0 && (
-                <div className={`admin-fees-status ${feeError ? 'error' : 'success'}`} aria-live="polite">
-                  {feeError || feeMessage}
-                </div>
-              )}
-            </section>
-
-            <div className="admin-quick-grid">
-              <Link to="/admin/manage-all?tab=properties" className="admin-quick-card">
-                <div className="admin-quick-icon green"><CheckCircle /></div>
-                <div>
-                  <div className="admin-quick-title">Approved Listings</div>
-                  <div className="admin-quick-sub">{approved.length} live on the site</div>
-                </div>
-              </Link>
-              <Link to="/admin/dashboard" className="admin-quick-card">
-                <div className="admin-quick-icon amber"><Clock /></div>
-                <div>
-                  <div className="admin-quick-title">Pending Approvals</div>
-                  <div className="admin-quick-sub">{pending.length} awaiting review</div>
-                </div>
-              </Link>
-              <Link to="/admin/manage-all?tab=users" className="admin-quick-card">
-                <div className="admin-quick-icon blue"><Users /></div>
-                <div>
-                  <div className="admin-quick-title">Manage Users</div>
-                  <div className="admin-quick-sub">5 registered</div>
-                </div>
-              </Link>
-              <Link to="/admin/manage-all?tab=properties" className="admin-quick-card">
-                <div className="admin-quick-icon violet"><Home /></div>
-                <div>
-                  <div className="admin-quick-title">Manage Properties</div>
-                  <div className="admin-quick-sub">{properties.length} total listings</div>
-                </div>
-              </Link>
+        <section className="admin-cockpit-workspace" id="property-moderation">
+          <div className="admin-cockpit-left">
+            <div className="admin-cockpit-tabs" role="tablist" aria-label="Moderation status">{([['PENDING', 'Pending Review'], ['APPROVED', 'Approved'], ['REJECTED', 'Rejected']] as const).map(([status, label]) => <button key={status} type="button" role="tab" aria-selected={moderationStatus === status} className={moderationStatus === status ? 'active' : ''} onClick={() => setModerationStatus(status)}>{label}<span>{counts[status]}</span></button>)}<small>Newest submissions first</small></div>
+            <div className="admin-cockpit-queue">
+              {loading ? <div className="admin-cockpit-empty"><Clock /><strong>Loading moderation queue...</strong></div> : error && properties.length === 0 ? <div className="admin-cockpit-empty error"><XCircle /><strong>{error}</strong></div> : visibleProperties.length === 0 ? <div className="admin-cockpit-empty"><CheckCircle /><strong>No {moderationStatus.toLowerCase()} properties.</strong></div> : visibleProperties.map((property, index) => {
+                const targetId = `admin-property-${property.id}`; const focused = focusedTargetId === targetId; const canModerate = property.approvalStatus === 'PENDING';
+                return <article id={targetId} key={property.id} tabIndex={-1} className={`admin-cockpit-listing ${index === 0 ? 'primary' : 'secondary'}${focused ? ' admin-focus-highlight' : ''}`}>
+                  <div className="admin-cockpit-listing-topline"><span className={`admin-cockpit-status ${property.approvalStatus.toLowerCase()}`}>{focused && <i />}{focused ? 'Notification target' : `${property.approvalStatus.charAt(0)}${property.approvalStatus.slice(1).toLowerCase()}`}</span><span>Submitted {formatDate(property.createdAt)} · Listing #{property.id}</span></div>
+                  <div className="admin-cockpit-listing-grid"><div className="admin-cockpit-listing-media">{property.imageUrl ? <img src={resolvePropertyImageUrl(property.imageUrl)} alt={property.title} /> : <div className="admin-cockpit-image-fallback"><Home /></div>}<span>{property.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}</span></div>
+                    <div className="admin-cockpit-listing-body"><div className="admin-cockpit-listing-heading"><div><span>{typeLabel(property.propertyType)}</span><h2>{property.title}</h2></div><div className="admin-cockpit-price"><small>Listed price</small><strong>{formatPropertyPrice(property.price)}</strong></div></div><p className="admin-cockpit-location"><MapPin />{property.location}</p><div className="admin-cockpit-facts"><span><small>Bedrooms</small><strong><Bed />{property.bedrooms} Beds</strong></span><span><small>Bathrooms</small><strong><Bath />{property.bathrooms} Baths</strong></span><span><small>Gross Area</small><strong><Square />{property.area.toLocaleString()} sqft</strong></span></div><div className="admin-cockpit-owner"><span>{initial(property.owner)}</span><div><small>Property owner</small><strong>{property.owner}</strong></div><p>{property.ownerPhone || 'No phone provided'}</p></div></div>
+                  </div><div className="admin-cockpit-listing-actions"><button type="button" className="review" onClick={() => setReviewing(property)}><Eye />Review Details</button>{canModerate && <div><button type="button" className="reject" onClick={() => updateStatus(property.id, 'REJECTED')} disabled={updatingId === property.id}><XCircle />Reject</button><button type="button" className="approve" onClick={() => updateStatus(property.id, 'APPROVED')} disabled={updatingId === property.id}><CheckCircle />Approve</button></div>}</div>
+                </article>;
+              })}
             </div>
           </div>
-        </main>
-      </div>
 
-      {/* Review Property Modal */}
-      {reviewing && (
-        <div className="dash-modal-overlay" onClick={() => setReviewing(null)}>
-          <div className="dash-modal admin-review-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="dash-modal-header">
-              <span className="dash-modal-title">Review Property</span>
-              <button className="dash-modal-close" onClick={() => setReviewing(null)} aria-label="Close">
-                <X />
-              </button>
-            </div>
-            <div className="admin-review-body">
-              {reviewing.imageUrl ? (
-                <img src={resolvePropertyImageUrl(reviewing.imageUrl)} alt={reviewing.title} className="admin-review-thumb" />
-              ) : (
-                <div className="admin-review-thumb admin-review-thumb-fallback"><Home /></div>
-              )}
-              <div className="admin-review-title-row">
-                <div className="admin-review-title">{reviewing.title}</div>
-                <div className="admin-pending-price">{formatPropertyPrice(reviewing.price)}</div>
-              </div>
-              <div className="admin-review-loc">
-                <MapPin style={{ width: 14, height: 14, verticalAlign: 'middle' }} /> {reviewing.location}
-              </div>
-              <div className="admin-review-grid">
-                <div className="admin-review-cell">
-                  <Bed /> {reviewing.bedrooms} beds
-                </div>
-                <div className="admin-review-cell">
-                  <Bath /> {reviewing.bathrooms} baths
-                </div>
-                <div className="admin-review-cell">
-                  <Square /> {reviewing.area.toLocaleString()} sqft
-                </div>
-                <div className="admin-review-cell">
-                  <Home /> {reviewing.propertyType.toLowerCase()}
-                </div>
-              </div>
-              <div className="admin-review-meta">
-                <div className="admin-review-meta-item">
-                  <span className="admin-review-label">Owner</span>
-                  <span className="admin-review-value">{reviewing.owner} · {reviewing.ownerPhone || '—'}</span>
-                </div>
-                <div className="admin-review-meta-item">
-                  <span className="admin-review-label">Listing Type</span>
-                  <span className="admin-review-value">
-                    {reviewing.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}
-                  </span>
-                </div>
-                <div className="admin-review-meta-item">
-                  <span className="admin-review-label">Submitted</span>
-                  <span className="admin-review-value">{formatDate(reviewing.createdAt)}</span>
-                </div>
-              </div>
-              <div className="admin-review-desc">
-                <span className="admin-review-label">Description</span>
-                <p>{reviewing.description}</p>
-              </div>
-            </div>
-            <div className="admin-review-actions">
-              <button onClick={() => handleReject(reviewing.id)} className="admin-btn-reject" disabled={updatingId === reviewing.id}>
-                <XCircle /> Reject Listing
-              </button>
-              <button onClick={() => handleApprove(reviewing.id)} className="admin-btn-approve" disabled={updatingId === reviewing.id}>
-                <CheckCircle /> Approve Listing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          <aside className="admin-cockpit-rail">
+            <section className="admin-cockpit-rail-card"><div className="admin-cockpit-rail-heading"><span><Settings /></span><div><h2>Posting Fee Schedule</h2><p>Current fees by property type.</p></div></div>{feeLoading ? <div className="admin-rail-status">Loading posting fees...</div> : postingFees.length === 0 ? <div className="admin-rail-status error">{feeError || 'No posting fees are configured.'}</div> : <div className="admin-cockpit-fees">{postingFees.map((fee) => <div className="admin-cockpit-fee" key={fee.propertyType}>{editingFee === fee.propertyType ? <div className="admin-cockpit-fee-editor"><label htmlFor={`fee-${fee.propertyType}`}>{typeLabel(fee.propertyType)}</label><div><span>MMK</span><input id={`fee-${fee.propertyType}`} type="number" min="0" max="999999999999" step="1" value={feeDrafts[fee.propertyType] ?? ''} onChange={(event) => setFeeDrafts((current) => ({ ...current, [fee.propertyType]: event.target.value }))} /></div><button type="button" onClick={() => savePostingFee(fee.propertyType)} disabled={savingFee === fee.propertyType}>{savingFee === fee.propertyType ? 'Saving...' : 'Save'}</button><button type="button" className="cancel" onClick={() => cancelEditingFee(fee)}>Cancel</button></div> : <><span>{typeLabel(fee.propertyType)}</span><strong>{formatMMKAmount(fee.feeAmount)}</strong><button type="button" onClick={() => startEditingFee(fee)}>Edit</button></>}</div>)}</div>}{(feeMessage || (feeError && postingFees.length > 0)) && <div className={`admin-rail-status ${feeError ? 'error' : 'success'}`} aria-live="polite">{feeError || feeMessage}</div>}</section>
+
+            <section className="admin-cockpit-rail-card"><div className="admin-cockpit-rail-heading"><span><Mail /></span><div><h2>Contact Messages</h2><p>{contactMessages.length} messages in the inbox.</p></div></div>{messagesLoading ? <div className="admin-rail-status">Loading contact messages...</div> : messagesError ? <div className="admin-rail-status error">{messagesError}</div> : contactMessages.length === 0 ? <div className="admin-cockpit-rail-empty">No contact messages yet.</div> : <div className="admin-cockpit-messages">{contactMessages.map((message) => <article id={`admin-contact-${message.id}`} key={message.id} tabIndex={-1} className={focusedTargetId === `admin-contact-${message.id}` ? 'admin-focus-highlight' : ''}><div><strong>{message.fullName}</strong><time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time></div><span>{message.email}{message.phone ? ` · ${message.phone}` : ''}</span><p>{message.message}</p></article>)}</div>}</section>
+
+            <section className="admin-cockpit-rail-card"><div className="admin-cockpit-rail-heading"><span><CheckCircle /></span><div><h2>Recently Processed</h2><p>Latest real moderation outcomes.</p></div></div>{recentlyProcessed.length === 0 ? <div className="admin-cockpit-rail-empty">No processed listings yet.</div> : <div className="admin-cockpit-processed">{recentlyProcessed.map((property) => <button key={property.id} type="button" onClick={() => { setModerationStatus(property.approvalStatus); window.setTimeout(() => document.getElementById(`admin-property-${property.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0); }}><span>{property.imageUrl ? <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" /> : <Home />}</span><span><strong>{property.title}</strong><small>{formatDate(property.createdAt)}</small></span><i className={property.approvalStatus.toLowerCase()}>{property.approvalStatus === 'APPROVED' ? 'Approved' : 'Rejected'}</i></button>)}</div>}</section>
+          </aside>
+        </section>
+      </main>
+
+      {reviewing && <div className="dash-modal-overlay" onClick={() => setReviewing(null)}><div className="dash-modal admin-review-modal" onClick={(event) => event.stopPropagation()}><div className="dash-modal-header"><span className="dash-modal-title">Review Property</span><button className="dash-modal-close" onClick={() => setReviewing(null)} aria-label="Close"><X /></button></div><div className="admin-review-body">{reviewing.imageUrl ? <img src={resolvePropertyImageUrl(reviewing.imageUrl)} alt={reviewing.title} className="admin-review-thumb" /> : <div className="admin-review-thumb admin-review-thumb-fallback"><Home /></div>}<div className="admin-review-title-row"><div className="admin-review-title">{reviewing.title}</div><div className="admin-pending-price">{formatPropertyPrice(reviewing.price)}</div></div><div className="admin-review-loc"><MapPin /> {reviewing.location}</div><div className="admin-review-grid"><div className="admin-review-cell"><Bed /> {reviewing.bedrooms} beds</div><div className="admin-review-cell"><Bath /> {reviewing.bathrooms} baths</div><div className="admin-review-cell"><Square /> {reviewing.area.toLocaleString()} sqft</div><div className="admin-review-cell"><Home /> {typeLabel(reviewing.propertyType)}</div></div><div className="admin-review-meta"><div className="admin-review-meta-item"><span className="admin-review-label">Owner</span><span className="admin-review-value">{reviewing.owner} · {reviewing.ownerPhone || '—'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Listing Type</span><span className="admin-review-value">{reviewing.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Submitted</span><span className="admin-review-value">{formatDate(reviewing.createdAt)}</span></div></div><div className="admin-review-desc"><span className="admin-review-label">Description</span><p>{reviewing.description}</p></div></div>{reviewing.approvalStatus === 'PENDING' && <div className="admin-review-actions"><button onClick={() => updateStatus(reviewing.id, 'REJECTED')} className="admin-btn-reject" disabled={updatingId === reviewing.id}><XCircle />Reject Listing</button><button onClick={() => updateStatus(reviewing.id, 'APPROVED')} className="admin-btn-approve" disabled={updatingId === reviewing.id}><CheckCircle />Approve Listing</button></div>}</div></div>}
     </div>
   );
 }

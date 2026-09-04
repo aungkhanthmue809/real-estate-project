@@ -6,7 +6,6 @@ import {
   Users,
   LogOut,
   Globe,
-  Heart,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -68,10 +67,6 @@ export function AdminSidebar({ active, onTabChange }: AdminSidebarProps) {
         <Link to="/admin/dashboard" className="adm-nav-item">
           <Clock /> Pending Approvals
         </Link>
-        <Link to="/admin/dashboard" className="adm-nav-item">
-          <Heart /> Favorites
-        </Link>
-
         <div className="adm-nav-section-label">User</div>
         <button
           onClick={() => goToTab('users')}
