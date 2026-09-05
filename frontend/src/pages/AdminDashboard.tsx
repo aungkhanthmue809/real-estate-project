@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Bath, Bed, Building2, CheckCircle, Clock, Eye, Home, LogOut, Mail, MapPin, Settings, Square, Users, X, XCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Bath, Bed, CheckCircle, Clock, Eye, Home, LogOut, Mail, MapPin, Settings, Square, X, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { useNotifications } from '../contexts/NotificationsContext';
@@ -17,6 +17,7 @@ const typeLabel = (type: PropertyType) => type.charAt(0) + type.slice(1).toLower
 
 export function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user, logout } = useAuth();
   const { refreshProperties } = useProperties();
@@ -136,12 +137,12 @@ export function AdminDashboard() {
       <div className="admin-ambient admin-ambient-one" /><div className="admin-ambient admin-ambient-two" /><div className="admin-ambient admin-ambient-three" />
       <header className="admin-cockpit-topbar"><div className="admin-cockpit-topbar-inner">
         <Link to="/admin/dashboard" className="admin-cockpit-brand"><span className="admin-cockpit-logo"><Home /></span><span><strong>UrbanNest</strong><small>Admin Workspace</small></span></Link>
-        <nav className="admin-cockpit-nav" aria-label="Admin navigation"><Link to="/admin/dashboard" className="active">Overview</Link><Link to="/admin/manage-all?tab=properties">Properties</Link><Link to="/admin/manage-all?tab=users">Users</Link></nav>
+        <nav className="admin-cockpit-nav" aria-label="Admin navigation"><Link to="/admin/dashboard" className={location.pathname === '/admin' || location.pathname === '/admin/dashboard' ? 'active' : ''}>Properties</Link><Link to="/admin/manage-all?tab=users">Users</Link><Link to="/dashboard">Dashboard</Link><Link to="/">Main Site</Link></nav>
         <div className="admin-cockpit-account"><span className="admin-console-state"><i />Console active</span><NotificationsBell /><div className="admin-cockpit-identity"><span className="admin-cockpit-avatar">{user?.avatar ? <img src={user.avatar} alt={user.username} /> : initial(user?.username || 'A')}</span><span><strong>{user?.username || 'admin'}</strong><small>Administrator</small></span></div><button type="button" className="admin-cockpit-logout" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut /></button></div>
       </div></header>
 
       <main className="admin-cockpit-main">
-        <section className="admin-cockpit-intro"><div><span className="admin-header-kicker"><i />Yangon property registry</span><h1>Moderation &amp; Operations</h1><p>Review property submissions, manage posting fees, and monitor incoming contact messages from one operational workspace.</p></div><div className="admin-cockpit-toolbar"><Link to="/admin/manage-all?tab=properties"><Building2 />Manage Properties</Link><Link to="/admin/manage-all?tab=users"><Users />Manage Users</Link><Link to="/"><Home />Main Site</Link></div></section>
+        <section className="admin-cockpit-intro"><div><span className="admin-header-kicker"><i />Yangon property registry</span><h1>Moderation &amp; Operations</h1><p>Review property submissions, manage posting fees, and monitor incoming contact messages from one operational workspace.</p></div></section>
         {(loading || error) && <div className={`admin-cockpit-notice${error ? ' error' : ''}`}>{loading ? 'Loading the property workspace...' : error}</div>}
         <section className="admin-cockpit-metrics" aria-label="Property metrics">{stats.map((stat) => <article key={stat.label} className={`admin-cockpit-metric ${stat.tone}`}><div><span>{stat.label}</span><span className="admin-cockpit-metric-icon"><stat.icon /></span></div><strong>{stat.value}</strong><small>{stat.meta}</small></article>)}</section>
 

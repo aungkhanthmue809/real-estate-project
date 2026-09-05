@@ -2,7 +2,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Home,
-  Clock,
   Users,
   LogOut,
   Globe,
@@ -10,21 +9,12 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 interface AdminSidebarProps {
-  active: 'dashboard' | 'properties' | 'users';
-  onTabChange?: (tab: 'users' | 'properties') => void;
+  active: 'users';
 }
 
-export function AdminSidebar({ active, onTabChange }: AdminSidebarProps) {
+export function AdminSidebar({ active }: AdminSidebarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-
-  const goToTab = (tab: 'users' | 'properties') => {
-    if (onTabChange) {
-      onTabChange(tab);
-    } else {
-      navigate(`/admin/manage-all?tab=${tab}`);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -51,29 +41,16 @@ export function AdminSidebar({ active, onTabChange }: AdminSidebarProps) {
 
       <nav className="adm-nav">
         <div className="adm-nav-section-label">Main</div>
-        <Link to="/admin/dashboard" className={`adm-nav-item ${active === 'dashboard' ? 'active' : ''}`}>
+        <Link to="/admin/dashboard" className="adm-nav-item">
+          <Home /> Properties
+        </Link>
+        <div className="adm-nav-section-label">Management</div>
+        <Link to="/admin/manage-all?tab=users" className={`adm-nav-item ${active === 'users' ? 'active' : ''}`}>
+          <Users /> All Users
+        </Link>
+        <Link to="/dashboard" className="adm-nav-item">
           <LayoutDashboard /> Dashboard
         </Link>
-
-        <div className="adm-nav-section-label">Property</div>
-        <button
-          onClick={() => goToTab('properties')}
-          className={`adm-nav-item ${active === 'properties' ? 'active' : ''}`}
-        >
-          <Home /> All Properties
-        </button>
-
-        <div className="adm-nav-section-label">Management</div>
-        <Link to="/admin/dashboard" className="adm-nav-item">
-          <Clock /> Pending Approvals
-        </Link>
-        <div className="adm-nav-section-label">User</div>
-        <button
-          onClick={() => goToTab('users')}
-          className={`adm-nav-item ${active === 'users' ? 'active' : ''}`}
-        >
-          <Users /> All Users
-        </button>
         <Link to="/" className="adm-nav-item">
           <Globe /> View Website
         </Link>

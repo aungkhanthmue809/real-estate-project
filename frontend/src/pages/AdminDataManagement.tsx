@@ -1,15 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Users, Home, Search, Trash2, Eye, MapPin, Pencil, X } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Users, Home, Search, Trash2, Pencil, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useProperties } from '../contexts/PropertiesContext';
-import { useNotifications } from '../contexts/NotificationsContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 import { NotificationsBell } from '../components/NotificationsBell';
-import { adminAPI } from '../utils/api';
-import { resolvePropertyImageUrl } from '../utils/imageUrl';
-import { formatPropertyPrice } from '../utils/price';
-import type { Property, PropertyRequest, User } from '../types';
+import type { User } from '../types';
 
 const DEMO_USERS: User[] = [
   { id: 1, username: 'buyer', email: 'buyer@demo.com', phone: '09-123456789', role: 'USER' },
@@ -21,71 +16,21 @@ const DEMO_USERS: User[] = [
 
 export function AdminDataManagement() {
   const { user } = useAuth();
-  const { refreshProperties } = useProperties();
-  const { newlyReceived } = useNotifications();
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'properties' ? 'properties' : 'users';
-  const [activeTab, setActiveTab] = useState<'users' | 'properties'>(initialTab);
   const [users, setUsers] = useState<User[]>(DEMO_USERS);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [propertiesLoading, setPropertiesLoading] = useState(true);
-  const [propertyError, setPropertyError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userDraft, setUserDraft] = useState<User | null>(null);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [propDraft, setPropDraft] = useState<Property | null>(null);
-
-  const loadAdminProperties = useCallback(async (showLoading = false) => {
-    if (showLoading) setPropertiesLoading(true);
-    try {
-      const { data } = await adminAPI.getAllProperties();
-      setProperties(data);
-      setPropertyError('');
-    } catch {
-      setPropertyError('Unable to load properties.');
-    } finally {
-      if (showLoading) setPropertiesLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadAdminProperties(true);
-  }, [loadAdminProperties]);
-
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
-    const approvalRequested = newlyReceived.some(
-      (notification) => notification.type === 'PROPERTY_APPROVAL_REQUESTED',
-    );
-    if (approvalRequested) void loadAdminProperties();
-  }, [loadAdminProperties, newlyReceived, user?.role]);
 
   const filteredUsers = users.filter(
     (u) => u.username.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredProperties = properties.filter(
-    (p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleDeleteUser = (id: number) => {
     setUsers(users.filter((u) => u.id !== id));
     setConfirmDelete(null);
-  };
-
-  const handleDeleteProperty = async (id: number) => {
-    setPropertyError('');
-    try {
-      await adminAPI.deleteProperty(id);
-      setProperties((prev) => prev.filter((property) => property.id !== id));
-      refreshProperties().catch(() => undefined);
-      setConfirmDelete(null);
-    } catch {
-      setPropertyError('Unable to delete the property.');
-    }
   };
 
   const openEditUser = (u: User) => {
@@ -100,68 +45,11 @@ export function AdminDataManagement() {
     setUserDraft(null);
   };
 
-  const openEditProperty = (p: Property) => {
-    setPropDraft({ ...p });
-    setEditingProperty(p);
-  };
-
-  const saveProperty = async () => {
-    if (!propDraft) return;
-
-    const request: PropertyRequest = {
-      title: propDraft.title,
-      description: propDraft.description,
-      price: propDraft.price,
-      location: propDraft.location,
-      propertyType: propDraft.propertyType,
-      status: propDraft.status,
-      bedrooms: propDraft.bedrooms,
-      bathrooms: propDraft.bathrooms,
-      area: propDraft.area,
-      imageUrl: propDraft.imageUrl,
-    };
-
-    setPropertyError('');
-    try {
-      const { data: updatedProperty } = await adminAPI.updateProperty(propDraft.id, request);
-
-      if (editingProperty && propDraft.approvalStatus !== editingProperty.approvalStatus) {
-        if (propDraft.approvalStatus === 'APPROVED') {
-          await adminAPI.approve(propDraft.id);
-        } else if (propDraft.approvalStatus === 'REJECTED') {
-          await adminAPI.reject(propDraft.id);
-        }
-      }
-
-      setProperties((prev) => prev.map((property) => (
-        property.id === propDraft.id
-          ? { ...updatedProperty, approvalStatus: propDraft.approvalStatus }
-          : property
-      )));
-      refreshProperties().catch(() => undefined);
-      setEditingProperty(null);
-      setPropDraft(null);
-    } catch (error) {
-      setPropertyError(error instanceof Error ? error.message : 'Unable to update the property.');
-    }
-  };
-
-  const setPropField = <K extends keyof Property>(key: K, value: Property[K]) => {
-    setPropDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
-  };
-
   const initial = (name: string) => (name || 'U').charAt(0).toUpperCase();
 
-  const statusBadge = (status: Property['approvalStatus']) => (
-    <span
-      className={`dash-badge ${
-        status === 'APPROVED' ? 'approved'
-        : status === 'PENDING' ? 'pending' : 'rejected'
-      }`}
-    >
-      {status.charAt(0) + status.slice(1).toLowerCase()}
-    </span>
-  );
+  if (searchParams.get('tab') === 'properties') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   return (
     <div className="admin-page">
@@ -183,39 +71,33 @@ export function AdminDataManagement() {
       </div>
 
       <div className="adm-layout admin-panel-layout">
-        <AdminSidebar active={activeTab === 'users' ? 'users' : 'properties'} onTabChange={setActiveTab} />
+        <AdminSidebar active="users" />
 
         <main className="adm-main">
           <div className="adm-content">
             <div className="adm-mobile-tabs">
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`adm-mobile-tab ${activeTab === 'users' ? 'active' : ''}`}
-              >
-                <Users /> Users
-              </button>
-              <button
-                onClick={() => setActiveTab('properties')}
-                className={`adm-mobile-tab ${activeTab === 'properties' ? 'active' : ''}`}
-              >
+              <Link to="/admin/dashboard" className="adm-mobile-tab">
                 <Home /> Properties
-              </button>
+              </Link>
+              <span className="adm-mobile-tab active">
+                <Users /> Users
+              </span>
             </div>
 
             <div className="adm-title-row">
               <div>
                 <div className="adm-title">
-                  {activeTab === 'users' ? 'All Users' : 'All Properties'}
+                  All Users
                 </div>
                 <div className="adm-title-sub">
-                  {activeTab === 'users' ? `${users.length} registered accounts` : `${properties.length} total listings`}
+                  {users.length} registered accounts
                 </div>
               </div>
               <div className="adm-search-wrap">
                 <Search className="adm-search-icon" />
                 <input
                   type="text"
-                  placeholder={`Search ${activeTab}...`}
+                  placeholder="Search users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="adm-search-input"
@@ -223,15 +105,8 @@ export function AdminDataManagement() {
               </div>
             </div>
 
-            {activeTab === 'properties' && (propertiesLoading || propertyError) && (
-              <div className="adm-title-sub">
-                {propertiesLoading ? 'Loading properties...' : propertyError}
-              </div>
-            )}
-
             <div className="adm-card">
-              {activeTab === 'users' ? (
-                <>
+              <>
                   <div className="adm-table-wrap">
                     <table className="adm-table">
                       <thead>
@@ -299,80 +174,7 @@ export function AdminDataManagement() {
                       <div className="adm-empty-text">No users found</div>
                     </div>
                   )}
-                </>
-              ) : (
-                <>
-                  <div className="adm-table-wrap">
-                    <table className="adm-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Property</th>
-                          <th>Status</th>
-                          <th style={{ textAlign: 'right' }}>Price</th>
-                          <th style={{ textAlign: 'right' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredProperties.map((property) => (
-                          <tr key={property.id}>
-                            <td className="admin-cell-id">#{property.id}</td>
-                            <td>
-                              <div className="adm-property-cell">
-                                <img src={resolvePropertyImageUrl(property.imageUrl)} alt="" className="adm-property-thumb" />
-                                <div>
-                                  <div className="adm-property-name">{property.title}</div>
-                                  <div className="adm-property-loc">
-                                    <MapPin style={{ width: 12, height: 12, verticalAlign: 'middle' }} /> {property.location}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td>{statusBadge(property.approvalStatus)}</td>
-                            <td className="adm-price">{formatPropertyPrice(property.price)}</td>
-                            <td>
-                              <div className="adm-actions">
-                                {confirmDelete === `prop-${property.id}` ? (
-                                  <div className="adm-confirm-inline">
-                                    <button onClick={() => handleDeleteProperty(property.id)} className="adm-confirm-yes">Confirm</button>
-                                    <button onClick={() => setConfirmDelete(null)} className="adm-confirm-no">Cancel</button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Link to={`/property/${property.id}`} className="adm-icon-btn" aria-label="View">
-                                      <Eye />
-                                    </Link>
-                                    <button
-                                      onClick={() => openEditProperty(property)}
-                                      className="adm-icon-btn"
-                                      title="Edit Property"
-                                    >
-                                      <Pencil />
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmDelete(`prop-${property.id}`)}
-                                      className="adm-icon-btn danger"
-                                      title="Delete Property"
-                                    >
-                                      <Trash2 />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {!propertiesLoading && filteredProperties.length === 0 && (
-                    <div className="adm-empty">
-                      <div className="adm-empty-icon"><Home /></div>
-                      <div className="adm-empty-text">No properties found</div>
-                    </div>
-                  )}
-                </>
-              )}
+              </>
             </div>
           </div>
         </main>
@@ -431,132 +233,6 @@ export function AdminDataManagement() {
             <div className="admin-edit-actions">
               <button className="dash-modal-btn cancel" onClick={() => setEditingUser(null)}>Cancel</button>
               <button className="dash-modal-btn save" onClick={saveUser}>Save Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Property Modal */}
-      {editingProperty && propDraft && (
-        <div className="dash-modal-overlay" onClick={() => setEditingProperty(null)}>
-          <div className="dash-modal admin-edit-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="dash-modal-header">
-              <span className="dash-modal-title">Edit Property</span>
-              <button className="dash-modal-close" onClick={() => setEditingProperty(null)} aria-label="Close">
-                <X />
-              </button>
-            </div>
-            <div className="admin-edit-body admin-edit-scroll">
-              <div className="admin-edit-field">
-                <label className="admin-edit-label">Title</label>
-                <input
-                  type="text"
-                  className="admin-edit-input"
-                  value={propDraft.title}
-                  onChange={(e) => setPropField('title', e.target.value)}
-                />
-              </div>
-              <div className="admin-edit-grid">
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Price (MMK)</label>
-                  <input
-                    type="number"
-                    className="admin-edit-input"
-                    value={propDraft.price}
-                    onChange={(e) => setPropField('price', Number(e.target.value))}
-                  />
-                </div>
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Location</label>
-                  <input
-                    type="text"
-                    className="admin-edit-input"
-                    value={propDraft.location}
-                    onChange={(e) => setPropField('location', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="admin-edit-grid">
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Property Type</label>
-                  <select
-                    className="admin-edit-select"
-                    value={propDraft.propertyType}
-                    onChange={(e) => setPropField('propertyType', e.target.value as Property['propertyType'])}
-                  >
-                    <option value="APARTMENT">Apartment</option>
-                    <option value="HOUSE">House</option>
-                    <option value="CONDO">Condo</option>
-                    <option value="LAND">Land</option>
-                    <option value="TOWNHOUSE">Townhouse</option>
-                  </select>
-                </div>
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Listing Status</label>
-                  <select
-                    className="admin-edit-select"
-                    value={propDraft.status}
-                    onChange={(e) => setPropField('status', e.target.value as Property['status'])}
-                  >
-                    <option value="FOR_SALE">For Sale</option>
-                    <option value="FOR_RENT">For Rent</option>
-                  </select>
-                </div>
-              </div>
-              <div className="admin-edit-field">
-                <label className="admin-edit-label">Approval Status</label>
-                <select
-                  className="admin-edit-select"
-                  value={propDraft.approvalStatus}
-                  onChange={(e) => setPropField('approvalStatus', e.target.value as Property['approvalStatus'])}
-                >
-                  {editingProperty.approvalStatus === 'PENDING' && <option value="PENDING">Pending</option>}
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </div>
-              <div className="admin-edit-grid">
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Bedrooms</label>
-                  <input
-                    type="number"
-                    className="admin-edit-input"
-                    value={propDraft.bedrooms}
-                    onChange={(e) => setPropField('bedrooms', Number(e.target.value))}
-                  />
-                </div>
-                <div className="admin-edit-field">
-                  <label className="admin-edit-label">Bathrooms</label>
-                  <input
-                    type="number"
-                    className="admin-edit-input"
-                    value={propDraft.bathrooms}
-                    onChange={(e) => setPropField('bathrooms', Number(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div className="admin-edit-field">
-                <label className="admin-edit-label">Area (sqft)</label>
-                <input
-                  type="number"
-                  className="admin-edit-input"
-                  value={propDraft.area}
-                  onChange={(e) => setPropField('area', Number(e.target.value))}
-                />
-              </div>
-              <div className="admin-edit-field">
-                <label className="admin-edit-label">Description</label>
-                <textarea
-                  className="admin-edit-input"
-                  rows={3}
-                  value={propDraft.description}
-                  onChange={(e) => setPropField('description', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="admin-edit-actions">
-              <button className="dash-modal-btn cancel" onClick={() => setEditingProperty(null)}>Cancel</button>
-              <button className="dash-modal-btn save" onClick={saveProperty}>Save Changes</button>
             </div>
           </div>
         </div>

@@ -16,6 +16,8 @@ export function Navbar() {
     || location.pathname === '/login'
     || location.pathname === '/register'
     || location.pathname === '/contact';
+  const navClass = (active: boolean) => `navbar-link${active ? ' active' : ''}`;
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/user/my-properties';
 
   return (
     <nav className={`navbar${usesShowcaseNavbar ? ' home-navbar' : ''}${isHome ? ' navbar-home-route' : ''}`}>
@@ -28,9 +30,18 @@ export function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/" className="navbar-link">Homepage</Link>
-          <Link to="/about" className="navbar-link">About</Link>
-          <Link to="/contact" className="navbar-link">Contact</Link>
+          <Link to="/" className={navClass(isHome)}>Homepage</Link>
+          <Link to="/about" className={navClass(location.pathname === '/about')}>About</Link>
+          <Link to="/contact" className={navClass(location.pathname === '/contact')}>Contact</Link>
+          {isAuthenticated && (
+            <Link to="/user/my-properties" className={navClass(isDashboard)}>Dashboard</Link>
+          )}
+          {user?.role === 'USER' && (
+            <Link to="/property/add" className={navClass(location.pathname === '/property/add')}>Add Property</Link>
+          )}
+          {user?.role === 'ADMIN' && (
+            <Link to="/admin/dashboard" className={navClass(location.pathname.startsWith('/admin'))}>Admin</Link>
+          )}
         </div>
 
         <div className="navbar-actions">
@@ -48,13 +59,6 @@ export function Navbar() {
                 </Link>
               )}
               <NotificationsBell />
-              <Link to="/user/my-properties" className="btn-signin">Dashboard</Link>
-              {user?.role === 'USER' && (
-                <Link to="/property/add" className="btn-getstarted">Add Property</Link>
-              )}
-              {user?.role === 'ADMIN' && (
-                <Link to="/admin/dashboard" className="btn-getstarted">Admin</Link>
-              )}
               <button onClick={logout} className="btn-signin">Sign Out</button>
             </>
           ) : (
@@ -81,15 +85,24 @@ export function Navbar() {
           <Link to="/contact" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
             <Home className="w-5 h-5" /> Contact
           </Link>
-          <Link to="/user/my-properties" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-            <LayoutDashboard className="w-5 h-5" /> Dashboard
-          </Link>
-          <Link to="/user/my-properties" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-            <Heart className="w-5 h-5" /> Favorites
-          </Link>
+          {isAuthenticated && (
+            <>
+              <Link to="/user/my-properties" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+                <LayoutDashboard className="w-5 h-5" /> Dashboard
+              </Link>
+              <Link to="/user/my-properties" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+                <Heart className="w-5 h-5" /> Favorites
+              </Link>
+            </>
+          )}
           {user?.role === 'USER' && (
             <Link to="/property/add" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
               <PlusCircle className="w-5 h-5" /> Add Property
+            </Link>
+          )}
+          {user?.role === 'ADMIN' && (
+            <Link to="/admin/dashboard" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
+              <LayoutDashboard className="w-5 h-5" /> Admin
             </Link>
           )}
           {isAuthenticated ? (

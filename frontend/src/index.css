@@ -70,20 +70,38 @@ body {
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
 }
 
 .navbar-link {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: #475569;
   text-decoration: none;
-  padding: 8px 0;
-  transition: color 0.2s;
+  padding: 9px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .navbar-link:hover {
   color: #1e293b;
+  background: white;
+}
+
+.navbar-link.active {
+  color: #1e293b;
+  background: white;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.navbar-link:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 2px;
 }
 
 .navbar-actions {
@@ -6398,7 +6416,9 @@ body {
 }
 
 .home-navbar .navbar-links {
-  gap: 8px;
+  gap: 4px;
+  border-color: rgba(226, 191, 178, 0.28);
+  background: rgba(250, 242, 238, 0.9);
 }
 
 .home-navbar .navbar-link {
@@ -6409,9 +6429,11 @@ body {
 }
 
 .home-navbar.navbar-home-route .navbar-link:first-child,
+.home-navbar .navbar-link.active,
 .home-navbar .navbar-link:hover {
-  background: #ffdbce;
+  background: white;
   color: #7f2b00;
+  box-shadow: 0 2px 8px rgba(80, 48, 32, 0.08);
 }
 
 .home-navbar .btn-signin {
@@ -10000,7 +10022,7 @@ body {
 .admin-cockpit-brand strong { font-size: 15px; line-height: 1.1; }
 .admin-cockpit-brand small { margin-top: 3px; color: #9a7c70; font-size: 9px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .admin-cockpit-nav { display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 12px; background: rgba(250,242,238,.9); }
-.admin-cockpit-nav a { padding: 9px 14px; border-radius: 8px; color: #80665b; font-size: 11px; font-weight: 700; text-decoration: none; }
+.admin-cockpit-nav a { display:flex;align-items:center;min-height:39px;padding:9px 14px;border-radius:8px;color:#80665b;font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:600;line-height:1;text-decoration:none;white-space:nowrap; }
 .admin-cockpit-nav a:hover,.admin-cockpit-nav a.active { color: #783008; background: #fff; box-shadow: 0 2px 8px rgba(80,48,32,.08); }
 .admin-cockpit-account { display: flex; justify-content: flex-end; align-items: center; gap: 11px; }
 .admin-console-state { display: inline-flex; align-items: center; gap: 6px; color: #08724f; font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
@@ -10015,13 +10037,9 @@ body {
 .admin-cockpit-logout svg { width: 16px; }
 
 .admin-cockpit-main { position: relative; z-index: 2; width: min(1392px, calc(100% - 48px)); margin: 0 auto; padding-top: 52px; }
-.admin-cockpit-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 32px; }
+.admin-cockpit-intro { display: flex; align-items: flex-end; gap: 28px; margin-bottom: 32px; }
 .admin-cockpit-intro h1 { margin: 10px 0 8px; color: var(--cockpit-ink); font-size: clamp(34px,4vw,52px); font-weight: 750; line-height: 1.04; letter-spacing: -.045em; }
 .admin-cockpit-intro p { max-width: 720px; margin: 0; color: var(--cockpit-muted); font-size: 14px; line-height: 1.65; }
-.admin-cockpit-toolbar { display: flex; flex: 0 0 auto; gap: 5px; padding: 5px; border: 1px solid rgba(226,191,178,.32); border-radius: 12px; background: rgba(255,255,255,.72); box-shadow: 0 5px 16px rgba(90,52,34,.06); backdrop-filter: blur(16px); }
-.admin-cockpit-toolbar a { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 8px; color: #6f554b; font-size: 10px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-.admin-cockpit-toolbar a:hover { color: #8b3100; background: #ffeadf; }
-.admin-cockpit-toolbar svg { width: 15px; }
 .admin-cockpit-notice { margin: -15px 0 22px; padding: 10px 14px; border-radius: 9px; color: #765b51; background: rgba(250,242,238,.8); font-size: 11px; }
 .admin-cockpit-notice.error { color: #9f1515; background: #fff0ee; }
 
@@ -10065,13 +10083,13 @@ body {
 .admin-cockpit .admin-focus-highlight { outline:2px solid #e45a12;outline-offset:3px;background:#fff0e8;box-shadow:0 0 0 6px rgba(204,73,0,.12),0 16px 38px rgba(204,73,0,.17);scroll-margin-block:110px; }
 
 .admin-cockpit-rail { position:sticky;top:108px;display:flex;min-width:0;flex-direction:column;gap:18px; }.admin-cockpit-rail-card { padding:18px;border:1px solid rgba(226,191,178,.34);border-radius:17px;background:rgba(255,255,255,.84);box-shadow:0 7px 22px -12px rgba(100,58,36,.16);backdrop-filter:blur(18px); }
-.admin-cockpit-rail-heading { display:flex;align-items:flex-start;gap:10px;margin-bottom:15px; }.admin-cockpit-rail-heading > span { display:grid;width:33px;height:33px;flex:0 0 auto;place-items:center;border-radius:9px;color:#8b3100;background:#ffdbce; }.admin-cockpit-rail-heading svg { width:16px; }.admin-cockpit-rail-heading h2 { margin:0;color:var(--cockpit-ink);font-size:13px; }.admin-cockpit-rail-heading p { margin:3px 0 0;color:#8e7166;font-size:9px;line-height:1.4; }
-.admin-cockpit-fees { display:flex;flex-direction:column;gap:7px; }.admin-cockpit-fee { display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px;border-radius:10px;background:#faf2ee; }.admin-cockpit-fee > span { color:#5f4940;font-size:10px;font-weight:650; }.admin-cockpit-fee > strong { color:var(--cockpit-ink);font-size:10px; }.admin-cockpit-fee > button,.admin-cockpit-fee-editor button { padding:5px 7px;border:0;border-radius:6px;color:#8b3100;background:#ffdbce;font-size:8px;font-weight:750;cursor:pointer; }
-.admin-cockpit-fee-editor { display:grid;grid-column:1/-1;grid-template-columns:1fr auto auto;gap:6px;align-items:center; }.admin-cockpit-fee-editor label { grid-column:1/-1;color:var(--cockpit-ink);font-size:9px;font-weight:700; }.admin-cockpit-fee-editor > div { display:flex;min-width:0;align-items:center;border:1px solid #decac1;border-radius:7px;background:#fff; }.admin-cockpit-fee-editor > div span { padding-left:7px;color:#9a7c70;font-size:8px; }.admin-cockpit-fee-editor input { width:100%;min-width:0;padding:7px;border:0;outline:0;background:transparent;font-size:9px; }.admin-cockpit-fee-editor button.cancel { color:#765b51;background:#eee7e3; }
-.admin-rail-status,.admin-cockpit-rail-empty { padding:12px;border-radius:9px;color:#80665b;background:#faf2ee;font-size:9px; }.admin-rail-status.error { color:#9f1515;background:#fff0ee; }.admin-rail-status.success { color:#08724f;background:#e6f7ef; }
-.admin-cockpit-messages { display:flex;max-height:365px;overflow-y:auto;flex-direction:column;gap:8px;padding:3px; }.admin-cockpit-messages article { padding:11px;border-radius:10px;outline:0;background:#faf2ee; }.admin-cockpit-messages article > div { display:flex;align-items:flex-start;justify-content:space-between;gap:8px; }.admin-cockpit-messages strong { min-width:0;overflow:hidden;color:var(--cockpit-ink);font-size:10px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-messages time { flex:0 0 auto;color:#aa8778;font-size:7px; }.admin-cockpit-messages article > span { display:block;margin-top:3px;overflow:hidden;color:#8e7166;font-size:8px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-messages p { display:-webkit-box;margin:7px 0 0;overflow:hidden;color:#5f4940;font-size:9px;line-height:1.45;-webkit-box-orient:vertical;-webkit-line-clamp:2; }
-.admin-cockpit-processed { display:flex;flex-direction:column;gap:7px; }.admin-cockpit-processed button { display:grid;width:100%;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px;border:0;border-radius:10px;text-align:left;background:#faf2ee;cursor:pointer; }.admin-cockpit-processed button:hover { background:#f2ebe7; }.admin-cockpit-processed button > span:first-child { display:grid;width:38px;height:38px;overflow:hidden;place-items:center;border-radius:8px;color:#aa8778;background:#eee7e3; }.admin-cockpit-processed img { width:100%;height:100%;object-fit:cover; }.admin-cockpit-processed svg { width:15px; }.admin-cockpit-processed strong,.admin-cockpit-processed small { display:block; }.admin-cockpit-processed strong { overflow:hidden;color:var(--cockpit-ink);font-size:9px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-processed small { margin-top:3px;color:#9a7c70;font-size:7px; }.admin-cockpit-processed i { padding:4px 6px;border-radius:999px;font-size:7px;font-style:normal;font-weight:750; }.admin-cockpit-processed i.approved { color:#006948;background:#d7f5e6; }.admin-cockpit-processed i.rejected { color:#a41414;background:#ffdad6; }
+.admin-cockpit-rail-heading { display:flex;align-items:flex-start;gap:11px;margin-bottom:17px; }.admin-cockpit-rail-heading > span { display:grid;width:35px;height:35px;flex:0 0 auto;place-items:center;border-radius:9px;color:#8b3100;background:#ffdbce; }.admin-cockpit-rail-heading svg { width:17px; }.admin-cockpit-rail-heading h2 { margin:0;color:var(--cockpit-ink);font-size:15px;line-height:1.3; }.admin-cockpit-rail-heading p { margin:4px 0 0;color:#8e7166;font-size:11px;line-height:1.45; }
+.admin-cockpit-fees { display:flex;flex-direction:column;gap:8px; }.admin-cockpit-fee { display:grid;min-height:44px;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;padding:11px;border-radius:10px;background:#faf2ee; }.admin-cockpit-fee > span { color:#5f4940;font-size:12px;font-weight:650; }.admin-cockpit-fee > strong { color:var(--cockpit-ink);font-size:12px;white-space:nowrap; }.admin-cockpit-fee > button,.admin-cockpit-fee-editor button { padding:6px 8px;border:0;border-radius:6px;color:#8b3100;background:#ffdbce;font-size:10px;font-weight:750;cursor:pointer; }
+.admin-cockpit-fee-editor { display:grid;grid-column:1/-1;grid-template-columns:1fr auto auto;gap:7px;align-items:center; }.admin-cockpit-fee-editor label { grid-column:1/-1;color:var(--cockpit-ink);font-size:11px;font-weight:700; }.admin-cockpit-fee-editor > div { display:flex;min-width:0;align-items:center;border:1px solid #decac1;border-radius:7px;background:#fff; }.admin-cockpit-fee-editor > div span { padding-left:8px;color:#9a7c70;font-size:10px; }.admin-cockpit-fee-editor input { width:100%;min-width:0;padding:8px;border:0;outline:0;background:transparent;font-size:11px; }.admin-cockpit-fee-editor button.cancel { color:#765b51;background:#eee7e3; }
+.admin-rail-status,.admin-cockpit-rail-empty { padding:13px;border-radius:9px;color:#80665b;background:#faf2ee;font-size:11px;line-height:1.45; }.admin-rail-status.error { color:#9f1515;background:#fff0ee; }.admin-rail-status.success { color:#08724f;background:#e6f7ef; }
+.admin-cockpit-messages { display:flex;max-height:390px;overflow-y:auto;flex-direction:column;gap:9px;padding:3px; }.admin-cockpit-messages article { padding:12px;border-radius:10px;outline:0;background:#faf2ee; }.admin-cockpit-messages article > div { display:flex;align-items:flex-start;justify-content:space-between;gap:8px; }.admin-cockpit-messages strong { min-width:0;overflow:hidden;color:var(--cockpit-ink);font-size:12px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-messages time { flex:0 0 auto;color:#9a7c70;font-size:9px; }.admin-cockpit-messages article > span { display:block;margin-top:4px;overflow:hidden;color:#80665b;font-size:10px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-messages p { display:-webkit-box;margin:8px 0 0;overflow:hidden;color:#5f4940;font-size:11px;line-height:1.5;-webkit-box-orient:vertical;-webkit-line-clamp:2; }
+.admin-cockpit-processed { display:flex;flex-direction:column;gap:8px; }.admin-cockpit-processed button { display:grid;width:100%;min-height:50px;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px;border:0;border-radius:10px;text-align:left;background:#faf2ee;cursor:pointer; }.admin-cockpit-processed button:hover { background:#f2ebe7; }.admin-cockpit-processed button > span:first-child { display:grid;width:40px;height:40px;overflow:hidden;place-items:center;border-radius:8px;color:#aa8778;background:#eee7e3; }.admin-cockpit-processed img { width:100%;height:100%;object-fit:cover; }.admin-cockpit-processed svg { width:16px; }.admin-cockpit-processed strong,.admin-cockpit-processed small { display:block; }.admin-cockpit-processed strong { overflow:hidden;color:var(--cockpit-ink);font-size:11px;text-overflow:ellipsis;white-space:nowrap; }.admin-cockpit-processed small { margin-top:4px;color:#8e7166;font-size:9px; }.admin-cockpit-processed i { padding:5px 7px;border-radius:999px;font-size:9px;font-style:normal;font-weight:750; }.admin-cockpit-processed i.approved { color:#006948;background:#d7f5e6; }.admin-cockpit-processed i.rejected { color:#a41414;background:#ffdad6; }
 
 @media (max-width:1100px) { .admin-cockpit-topbar-inner { grid-template-columns:1fr auto; }.admin-cockpit-nav { display:none; }.admin-cockpit-workspace { grid-template-columns:minmax(0,1.7fr) minmax(280px,.8fr); }.admin-console-state { display:none; }.admin-cockpit-listing-grid,.admin-cockpit-listing.secondary .admin-cockpit-listing-grid { grid-template-columns:1fr; }.admin-cockpit-listing-media,.admin-cockpit-listing.secondary .admin-cockpit-listing-media { min-height:260px; } }
-@media (max-width:850px) { .admin-cockpit-main { width:min(100% - 28px,760px);padding-top:34px; }.admin-cockpit-intro { align-items:flex-start;flex-direction:column; }.admin-cockpit-toolbar { width:100%;overflow-x:auto; }.admin-cockpit-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.admin-cockpit-workspace { grid-template-columns:minmax(0,1fr); }.admin-cockpit-rail { position:static; }.admin-cockpit-identity > span:last-child { display:none; } }
-@media (max-width:560px) { .admin-cockpit-topbar { padding:8px 10px 0; }.admin-cockpit-topbar-inner { min-height:66px;padding:0 12px;border-radius:14px; }.admin-cockpit-brand small { display:none; }.admin-cockpit-brand strong { font-size:13px; }.admin-cockpit-account { gap:7px; }.admin-cockpit-avatar { display:none; }.admin-cockpit-main { width:calc(100% - 20px);padding-top:28px; }.admin-cockpit-intro h1 { font-size:34px; }.admin-cockpit-toolbar a { padding:9px 10px; }.admin-cockpit-metrics { gap:9px; }.admin-cockpit-metric { min-height:128px;padding:15px; }.admin-cockpit-metric > strong { font-size:31px; }.admin-cockpit-tabs > small { display:none; }.admin-cockpit-listing { padding:13px; }.admin-cockpit-listing-topline { align-items:flex-start;flex-direction:column; }.admin-cockpit-listing-media,.admin-cockpit-listing.secondary .admin-cockpit-listing-media { min-height:220px; }.admin-cockpit-listing-heading { flex-direction:column; }.admin-cockpit-price { text-align:left; }.admin-cockpit-facts { grid-template-columns:1fr; }.admin-cockpit-owner { align-items:flex-start;flex-wrap:wrap; }.admin-cockpit-owner p { width:100%;margin-left:41px; }.admin-cockpit-listing-actions { align-items:stretch;flex-direction:column; }.admin-cockpit-listing-actions > div { display:grid;grid-template-columns:1fr 1fr; }.admin-cockpit-listing-actions button { width:100%; }.admin-cockpit-rail-card { padding:15px; } }
+@media (max-width:850px) { .admin-cockpit-main { width:min(100% - 28px,760px);padding-top:34px; }.admin-cockpit-intro { align-items:flex-start;flex-direction:column; }.admin-cockpit-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.admin-cockpit-workspace { grid-template-columns:minmax(0,1fr); }.admin-cockpit-rail { position:static; }.admin-cockpit-identity > span:last-child { display:none; } }
+@media (max-width:560px) { .admin-cockpit-topbar { padding:8px 10px 0; }.admin-cockpit-topbar-inner { min-height:66px;padding:0 12px;border-radius:14px; }.admin-cockpit-brand small { display:none; }.admin-cockpit-brand strong { font-size:13px; }.admin-cockpit-account { gap:7px; }.admin-cockpit-avatar { display:none; }.admin-cockpit-main { width:calc(100% - 20px);padding-top:28px; }.admin-cockpit-intro h1 { font-size:34px; }.admin-cockpit-metrics { gap:9px; }.admin-cockpit-metric { min-height:128px;padding:15px; }.admin-cockpit-metric > strong { font-size:31px; }.admin-cockpit-tabs > small { display:none; }.admin-cockpit-listing { padding:13px; }.admin-cockpit-listing-topline { align-items:flex-start;flex-direction:column; }.admin-cockpit-listing-media,.admin-cockpit-listing.secondary .admin-cockpit-listing-media { min-height:220px; }.admin-cockpit-listing-heading { flex-direction:column; }.admin-cockpit-price { text-align:left; }.admin-cockpit-facts { grid-template-columns:1fr; }.admin-cockpit-owner { align-items:flex-start;flex-wrap:wrap; }.admin-cockpit-owner p { width:100%;margin-left:41px; }.admin-cockpit-listing-actions { align-items:stretch;flex-direction:column; }.admin-cockpit-listing-actions > div { display:grid;grid-template-columns:1fr 1fr; }.admin-cockpit-listing-actions button { width:100%; }.admin-cockpit-rail-card { padding:15px; } }
