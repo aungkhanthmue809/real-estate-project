@@ -1,223 +1,207 @@
 import {
-  Target,
-  Eye,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Search,
+  Bell,
   Building2,
-  PhoneCall,
-  Workflow,
-  Server,
+  CheckCircle2,
   Database,
-  Monitor,
-  Braces,
-  GitBranch,
   GraduationCap,
+  Home as HomeIcon,
+  KeyRound,
+  Layers3,
+  Map,
+  MapPin,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Upload,
+  UserRound,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const FEATURES = [
-  { icon: Search, title: 'Smart Search & Dynamic Filtering', desc: 'Multi-criteria engine to narrow down properties by price range, location, and amenity configurations.' },
-  { icon: Building2, title: 'Comprehensive Listing Management', desc: 'Dedicated panel for sellers and agents to create, update, and manage property specifications and media galleries.' },
-  { icon: PhoneCall, title: 'Direct Buyer-Seller Engagement', desc: 'Integrated quick-action buttons enabling direct phone calls and messaging without intermediary interference.' },
-  { icon: Workflow, title: 'API-Driven Architecture', desc: 'Modular RESTful endpoints ensuring fast, responsive client-server data synchronization.' },
+const CAPABILITIES = [
+  {
+    icon: Search,
+    number: '01',
+    title: 'Property Discovery',
+    description: 'Browse approved listings for sale or rent and refine results by township, property type, bedrooms, and price.',
+    details: ['Approved listings', 'URL-driven filters', 'MMK price display'],
+  },
+  {
+    icon: Building2,
+    number: '02',
+    title: 'Property Listing',
+    description: 'Owners can create and edit structured listings, upload a property image, and select an exact map location.',
+    details: ['Guided listing form', 'Local image upload', 'Map coordinates'],
+  },
+  {
+    icon: UserRound,
+    number: '03',
+    title: 'User Workspace',
+    description: 'A personal workspace keeps owned properties, approval states, saved favorites, and notifications together.',
+    details: ['Property management', 'Per-user favorites', 'Persisted notifications'],
+  },
+  {
+    icon: ShieldCheck,
+    number: '04',
+    title: 'Admin Moderation',
+    description: 'Administrators review submissions, approve or reject listings, manage fees, users, and contact messages.',
+    details: ['Moderation workflow', 'Posting-fee settings', 'Contact inbox'],
+  },
 ];
 
-const TECH_STACK = [
-  { icon: Server, label: 'Backend Framework', items: ['Java 17+', 'Spring Boot', 'Spring Web', 'Data JPA', 'Security'] },
-  { icon: Database, label: 'Database & Persistence', items: ['PostgreSQL', 'Optimized relational schemas'] },
-  { icon: Monitor, label: 'Frontend & UI', items: ['React', 'Thymeleaf', 'HTML5', 'CSS3', 'JavaScript (ES6+)'] },
-  { icon: Braces, label: 'API Protocol', items: ['RESTful JSON APIs'] },
-  { icon: GitBranch, label: 'Development & Collaboration', items: ['IntelliJ IDEA', 'VS Code', 'Git', 'GitHub'] },
+const PRINCIPLES = [
+  { icon: Layers3, title: 'Structured information', text: 'Consistent property fields make listings easier to understand and compare.' },
+  { icon: MapPin, title: 'Yangon focused', text: 'Township-aware discovery reflects the geographic scope currently supported.' },
+  { icon: CheckCircle2, title: 'Visible moderation', text: 'Owners can follow whether a submission is pending, approved, or rejected.' },
+  { icon: Map, title: 'Open map tools', text: 'Leaflet and OpenStreetMap provide interactive property location context.' },
+  { icon: KeyRound, title: 'Role-based access', text: 'Public, owner, and administrator experiences respect their intended permissions.' },
+  { icon: SlidersHorizontal, title: 'Responsive workflows', text: 'Discovery and management interfaces adapt across desktop and mobile screens.' },
 ];
 
-const TEAM = [
-  { avatar: 'lead', name: 'Project Lead', role: 'Full-Stack Developer', desc: 'System Architecture & Spring Boot Integration', tag: 'Member 1' },
-  { avatar: 'backend-lead', name: 'Backend Lead', role: 'Database Engineer', desc: 'Database Design (PostgreSQL) & Data JPA Repositories', tag: 'Member 2' },
-  { avatar: 'backend', name: 'Backend Engineer', role: 'REST API Developer', desc: 'REST API Development & Business Logic', tag: 'Member 3' },
-  { avatar: 'frontend-lead', name: 'Frontend Lead', role: 'React Developer', desc: 'React Component Architecture & State Management', tag: 'Member 4' },
-  { avatar: 'frontend', name: 'Frontend Engineer', role: 'UI/UX Designer', desc: 'UI/UX Design, Thymeleaf Templating & CSS Styling', tag: 'Member 5' },
-  { avatar: 'qa', name: 'QA & Documentation', role: 'Tester / Documenter', desc: 'System Testing, API Validation & Project Documentation', tag: 'Member 6' },
+const TECHNOLOGIES = [
+  'React + TypeScript',
+  'Spring Boot REST API',
+  'PostgreSQL',
+  'JWT authentication',
+  'Flyway migrations',
+  'Leaflet + OpenStreetMap',
 ];
 
 export function AboutUs() {
   return (
-    <div className="about-page">
-      <div className="about-container">
-        {/* Hero */}
-        <section className="about-hero">
-          <div className="about-hero-overlay" />
-          <div className="about-hero-content">
-            <span className="about-hero-badge">University Project</span>
-            <h1 className="about-hero-title">Connecting People to Their Ideal Spaces</h1>
-            <p className="about-hero-sub">
-              A modern, web-based platform streamlining property discovery and real estate management.
-            </p>
-            <Link to="/" className="about-hero-btn">Explore Listings</Link>
-          </div>
-        </section>
+    <div className="about-page about-showcase-page">
+      <div className="about-showcase-ambient about-showcase-ambient-one" />
+      <div className="about-showcase-ambient about-showcase-ambient-two" />
+      <div className="about-showcase-ambient about-showcase-ambient-three" />
 
-        {/* Mission & Vision */}
-        <section className="about-section">
-          <div className="about-section-head">
-            <span className="about-kicker">Project Context</span>
-            <h2 className="about-section-title">Our Mission &amp; Vision</h2>
-          </div>
-          <div className="about-mv-grid">
-            <div className="about-mv-card">
-              <div className="about-mv-icon blue"><Target /></div>
-              <h3 className="about-mv-title">Our Mission</h3>
-              <p className="about-mv-desc">
-                To eliminate friction in real estate transactions by replacing fragmented social media groups and
-                manual record-keeping with an organized, direct-connect property platform.
-              </p>
-            </div>
-            <div className="about-mv-card">
-              <div className="about-mv-icon violet"><Eye /></div>
-              <h3 className="about-mv-title">Our Vision</h3>
-              <p className="about-mv-desc">
-                To deliver a high-performance enterprise solution powered by Java Spring Boot and modern web
-                technologies that empowers buyers and sellers with seamless property discovery.
-              </p>
+      <main className="about-showcase-main">
+        <section className="about-showcase-hero">
+          <div className="about-showcase-hero-copy">
+            <span className="about-showcase-kicker"><i />About UrbanNest</span>
+            <h1>A more thoughtful way to <em>discover property.</em></h1>
+            <p>UrbanNest brings property discovery, listing management, moderation, and location tools into one streamlined full-stack platform centered on Yangon.</p>
+            <div className="about-showcase-actions">
+              <Link to="/" className="primary">Explore Properties</Link>
+              <Link to="/contact" className="secondary">Contact Us</Link>
             </div>
           </div>
-        </section>
 
-        {/* Problem & Solution */}
-        <section className="about-section">
-          <div className="about-section-head">
-            <span className="about-kicker">Why UrbanNest</span>
-            <h2 className="about-section-title">The Problem &amp; Our Solution</h2>
-          </div>
-          <div className="about-ps-grid">
-            <div className="about-ps-card problem">
-              <h3 className="about-ps-title"><AlertCircle /> The Challenge</h3>
-              <ul className="about-ps-list">
-                <li>
-                  <XCircle />
-                  <div>
-                    <strong>Unorganized Data</strong>
-                    <span>Property records scattered across unstructured groups and paper logs.</span>
-                  </div>
-                </li>
-                <li>
-                  <XCircle />
-                  <div>
-                    <strong>Inefficient Searching</strong>
-                    <span>Buyers spend hours making calls to verify simple details.</span>
-                  </div>
-                </li>
-                <li>
-                  <XCircle />
-                  <div>
-                    <strong>Communication Friction</strong>
-                    <span>Middlemen and multi-layered agent delays.</span>
-                  </div>
-                </li>
-              </ul>
+          <div className="about-showcase-hero-visual" aria-label="UrbanNest property workflow">
+            <div className="about-showcase-visual-head">
+              <span><HomeIcon /></span>
+              <div><strong>One connected platform</strong><small>Yangon property workflow</small></div>
+              <i>Live</i>
             </div>
-            <div className="about-ps-card solution">
-              <h3 className="about-ps-title"><CheckCircle /> Our Solution</h3>
-              <ul className="about-ps-list">
-                <li>
-                  <CheckCircle />
-                  <div>
-                    <strong>Centralized Management</strong>
-                    <span>Full CRUD tools enabling sellers to update property specifications and images instantly.</span>
-                  </div>
-                </li>
-                <li>
-                  <CheckCircle />
-                  <div>
-                    <strong>Smart Filtering Engine</strong>
-                    <span>Dynamic range and location filters backed by Spring Data JPA &amp; PostgreSQL queries.</span>
-                  </div>
-                </li>
-                <li>
-                  <CheckCircle />
-                  <div>
-                    <strong>Direct Contact Links</strong>
-                    <span>One-click communication via Direct Call and Viber.</span>
-                  </div>
-                </li>
-              </ul>
+            <div className="about-showcase-map-grid">
+              <span className="about-showcase-map-road road-one" />
+              <span className="about-showcase-map-road road-two" />
+              <span className="about-showcase-map-road road-three" />
+              <span className="about-showcase-map-pin"><MapPin /></span>
+              <div className="about-showcase-map-label"><strong>Yangon</strong><small>Current city coverage</small></div>
+            </div>
+            <div className="about-showcase-flow">
+              <div><span><Search /></span><strong>Discover</strong><small>Approved listings</small></div>
+              <i />
+              <div><span><Upload /></span><strong>List</strong><small>Owner submissions</small></div>
+              <i />
+              <div><span><ShieldCheck /></span><strong>Moderate</strong><small>Admin review</small></div>
             </div>
           </div>
         </section>
 
-        {/* Key Features */}
-        <section className="about-section">
-          <div className="about-section-head">
-            <span className="about-kicker">System Scope</span>
-            <h2 className="about-section-title">Key Platform Features</h2>
+        <section className="about-showcase-story">
+          <div className="about-showcase-story-statement">
+            <span className="about-showcase-kicker"><i />The project story</span>
+            <h2>Built to make property information clearer and easier to manage.</h2>
           </div>
-          <div className="about-features-grid">
-            {FEATURES.map((feature) => (
-              <div className="about-feature-card" key={feature.title}>
-                <div className="about-feature-icon"><feature.icon /></div>
-                <h3 className="about-feature-title">{feature.title}</h3>
-                <p className="about-feature-desc">{feature.desc}</p>
-              </div>
+          <div className="about-showcase-story-copy">
+            <p>UrbanNest is a university full-stack real-estate application designed around the needs of public visitors, property owners, and administrators.</p>
+            <p>Rather than claiming to replace real-world legal or financial processes, the platform focuses on the digital workflow it can support well: structured listings, focused discovery, owner controls, transparent moderation, and useful location context.</p>
+            <div className="about-showcase-story-facts">
+              <div><strong>1</strong><span>City currently covered</span></div>
+              <div><strong>3</strong><span>Connected user experiences</span></div>
+              <div><strong>Full-stack</strong><span>Academic implementation</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="about-showcase-section">
+          <div className="about-showcase-section-head">
+            <div><span className="about-showcase-kicker"><i />Purpose and direction</span><h2>Mission &amp; vision</h2></div>
+            <p>A practical foundation for organizing property discovery and listing workflows without overstating what the platform currently provides.</p>
+          </div>
+          <div className="about-showcase-mv-grid">
+            <article>
+              <span className="about-showcase-card-number">01 / Mission</span>
+              <div className="about-showcase-card-icon"><MapPin /></div>
+              <h3>Make local property discovery more coherent.</h3>
+              <p>Give people a clear place to browse structured Yangon listings while giving owners practical tools to publish and manage their property information.</p>
+            </article>
+            <article>
+              <span className="about-showcase-card-number">02 / Vision</span>
+              <div className="about-showcase-card-icon"><Bell /></div>
+              <h3>Keep every participant informed.</h3>
+              <p>Develop a dependable workflow in which property details, moderation decisions, saved homes, and important updates remain accessible and understandable.</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="about-showcase-section about-showcase-capabilities">
+          <div className="about-showcase-section-head">
+            <div><span className="about-showcase-kicker"><i />Platform scope</span><h2>What UrbanNest does</h2></div>
+            <p>Four connected experiences built from functionality that exists in the application today.</p>
+          </div>
+          <div className="about-showcase-capability-grid">
+            {CAPABILITIES.map((capability) => (
+              <article key={capability.title}>
+                <div className="about-showcase-capability-top"><span><capability.icon /></span><small>{capability.number}</small></div>
+                <h3>{capability.title}</h3>
+                <p>{capability.description}</p>
+                <ul>{capability.details.map((detail) => <li key={detail}><CheckCircle2 />{detail}</li>)}</ul>
+              </article>
             ))}
           </div>
         </section>
 
-        {/* Tech Stack */}
-        <section className="about-section">
-          <div className="about-section-head">
-            <span className="about-kicker">Architecture</span>
-            <h2 className="about-section-title">Technical Stack &amp; Architecture</h2>
+        <section className="about-showcase-principles">
+          <div className="about-showcase-principles-intro">
+            <span className="about-showcase-kicker"><i />Platform principles</span>
+            <h2>Designed around clarity, context, and control.</h2>
+            <p>The product choices reflect the current scope of a real academic implementation—not invented service claims.</p>
           </div>
-          <div className="about-tech-grid">
-            {TECH_STACK.map((tech) => (
-              <div className="about-tech-card" key={tech.label}>
-                <div className="about-tech-icon"><tech.icon /></div>
-                <div className="about-tech-label">{tech.label}</div>
-                <div className="about-tech-chips">
-                  {tech.items.map((item) => (
-                    <span className="about-tech-chip" key={item}>{item}</span>
-                  ))}
-                </div>
-              </div>
+          <div className="about-showcase-principle-grid">
+            {PRINCIPLES.map((principle) => (
+              <article key={principle.title}><span><principle.icon /></span><div><h3>{principle.title}</h3><p>{principle.text}</p></div></article>
             ))}
           </div>
         </section>
 
-        {/* Team */}
-        <section className="about-section">
-          <div className="about-section-head">
-            <span className="about-kicker">The Team</span>
-            <h2 className="about-section-title">Meet the Development Team</h2>
+        <section className="about-showcase-academic">
+          <div className="about-showcase-academic-mark"><GraduationCap /></div>
+          <div className="about-showcase-academic-copy">
+            <span className="about-showcase-kicker"><i />University project</span>
+            <h2>A working full-stack software engineering project.</h2>
+            <p>UrbanNest demonstrates frontend architecture, RESTful backend development, persistent relational data, authentication, authorization, database migrations, image handling, and interactive mapping in one integrated application.</p>
           </div>
-          <div className="about-team-grid">
-            {TEAM.map((member) => (
-              <div className="about-team-card" key={member.tag}>
-                <span className="about-team-tag">{member.tag}</span>
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatar}`}
-                  alt={member.name}
-                  className="about-team-avatar"
-                />
-                <div className="about-team-name">{member.name}</div>
-                <div className="about-team-role">{member.role}</div>
-                <p className="about-team-desc">{member.desc}</p>
-              </div>
-            ))}
+          <div className="about-showcase-tech-list">
+            {TECHNOLOGIES.map((technology) => <span key={technology}><Database />{technology}</span>)}
           </div>
         </section>
 
-        {/* Academic Disclaimer */}
-        <section className="about-disclaimer">
-          <div className="about-disclaimer-icon"><GraduationCap /></div>
-          <h3 className="about-disclaimer-title">Academic Project Note</h3>
-          <p className="about-disclaimer-desc">
-            This platform was developed as an academic software engineering project for Java Enterprise development.
-            While fully functional for real estate listing and discovery, financial transactions and escrow handling
-            are conducted independently between buyers and sellers outside the application.
-          </p>
+        <section className="about-showcase-cta">
+          <div><span className="about-showcase-kicker"><i />Explore the platform</span><h2>Find your way around UrbanNest.</h2><p>Browse the current property catalog or get in touch through the working contact form.</p></div>
+          <div><Link to="/" className="primary">Explore Properties</Link><Link to="/contact" className="secondary">Contact Us</Link></div>
         </section>
-      </div>
+      </main>
+
+      <footer className="home-footer about-showcase-footer">
+        <div className="home-footer-inner">
+          <div className="home-footer-top">
+            <Link to="/" className="home-footer-brand"><span className="home-footer-logo"><HomeIcon /></span><span>UrbanNest Real Estate</span></Link>
+            <nav className="home-footer-nav" aria-label="Footer navigation"><Link to="/">Home</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/dashboard">Dashboard</Link></nav>
+          </div>
+          <div className="home-footer-bottom"><p>© {new Date().getFullYear()} UrbanNest Real Estate. All rights reserved.</p><div className="home-footer-meta"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><span>Property discovery in Yangon, Myanmar.</span></div></div>
+        </div>
+      </footer>
     </div>
   );
 }

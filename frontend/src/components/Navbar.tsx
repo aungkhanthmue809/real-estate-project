@@ -15,6 +15,7 @@ export function Navbar() {
     || location.pathname === '/user/my-properties'
     || location.pathname === '/login'
     || location.pathname === '/register'
+    || location.pathname === '/about'
     || location.pathname === '/contact';
   const navClass = (active: boolean) => `navbar-link${active ? ' active' : ''}`;
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/user/my-properties';
