@@ -2,13 +2,14 @@ import { useEffect, useState, type SyntheticEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowRight, Bath, Bed, Building2, CalendarDays, Car, Check, ChevronRight,
-  CircleDollarSign, Copy, FileCheck2, Heart, Home as HomeIcon, Image as ImageIcon,
+  CircleDollarSign, Copy, FileCheck2, Heart, Image as ImageIcon,
   KeyRound, Landmark, Link2, MapPin, Ruler, ShieldCheck, UserRound,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useProperties } from '../contexts/PropertiesContext';
 import { PropertyMap, type MapCoordinates } from '../components/PropertyMap';
+import { UrbanNestLogo } from '../components/UrbanNestLogo';
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import { formatPropertyPrice } from '../utils/price';
 import type { Property } from '../types';
@@ -210,7 +211,7 @@ export function PropertyDetails() {
         )}
       </div>
 
-      <footer className="pd-footer"><div><Link to="/" className="pd-footer-brand"><span><HomeIcon /></span>UrbanNest Real Estate</Link><nav><Link to="/">Home</Link><Link to="/contact">Contact</Link><Link to="/dashboard">Dashboard</Link><Link to="/privacy">Privacy</Link></nav></div><div><p>© 2026 UrbanNest Real Estate. All rights reserved.</p><p>Property discovery in Yangon, Myanmar.</p></div></footer>
+      <footer className="pd-footer"><div><Link to="/" className="pd-footer-brand"><UrbanNestLogo className="pd-footer-logo" />UrbanNest Real Estate</Link><nav><Link to="/">Home</Link><Link to="/contact">Contact</Link><Link to="/dashboard">Dashboard</Link><Link to="/privacy">Privacy</Link></nav></div><div><p>© 2026 UrbanNest Real Estate. All rights reserved.</p><p>Property discovery in Yangon, Myanmar.</p></div></footer>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { UrbanNestLogo } from '../components/UrbanNestLogo';
 
 const CAPABILITIES = [
   {
@@ -196,7 +197,7 @@ export function AboutUs() {
       <footer className="home-footer about-showcase-footer">
         <div className="home-footer-inner">
           <div className="home-footer-top">
-            <Link to="/" className="home-footer-brand"><span className="home-footer-logo"><HomeIcon /></span><span>UrbanNest Real Estate</span></Link>
+            <Link to="/" className="home-footer-brand"><UrbanNestLogo className="home-footer-logo" /><span>UrbanNest Real Estate</span></Link>
             <nav className="home-footer-nav" aria-label="Footer navigation"><Link to="/">Home</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/dashboard">Dashboard</Link></nav>
           </div>
           <div className="home-footer-bottom"><p>© {new Date().getFullYear()} UrbanNest Real Estate. All rights reserved.</p><div className="home-footer-meta"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><span>Property discovery in Yangon, Myanmar.</span></div></div>

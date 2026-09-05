@@ -8,6 +8,7 @@ import { filterProperties, parseOptionalPrice, type BedroomFilter } from '../uti
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import { formatPropertyPrice } from '../utils/price';
 import type { Property, PropertyType } from '../types';
+import { UrbanNestLogo } from '../components/UrbanNestLogo';
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: 'APARTMENT', label: 'Apartment' },
@@ -430,7 +431,7 @@ export function Home() {
         <div className="home-footer-inner">
           <div className="home-footer-top">
             <Link to="/" className="home-footer-brand">
-              <span className="home-footer-logo"><HomeIcon /></span>
+              <UrbanNestLogo className="home-footer-logo" />
               <span>UrbanNest Real Estate</span>
             </Link>
             <nav className="home-footer-nav" aria-label="Footer navigation">

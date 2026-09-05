@@ -3,6 +3,7 @@ import { Menu, X, Home, LayoutDashboard, PlusCircle, Heart, LogOut } from 'lucid
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { NotificationsBell } from './NotificationsBell';
+import { UrbanNestLogo } from './UrbanNestLogo';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -24,9 +25,7 @@ export function Navbar() {
     <nav className={`navbar${usesShowcaseNavbar ? ' home-navbar' : ''}${isHome ? ' navbar-home-route' : ''}`}>
       <div className="navbar-inner">
         <Link to="/" className="navbar-logo">
-          <span className="navbar-logo-icon">
-            <Home className="w-5 h-5" />
-          </span>
+          <UrbanNestLogo className="navbar-logo-icon" />
           UrbanNest
         </Link>
 

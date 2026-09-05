@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Clock, Home, Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react';
+import { UrbanNestLogo } from '../components/UrbanNestLogo';
 import { contactMessageAPI } from '../utils/api';
 
 const CONTACT_METHODS = [
@@ -123,7 +124,7 @@ export function ContactUs() {
 
       <footer className="contact-footer">
         <div className="contact-footer-top">
-          <Link to="/" className="contact-footer-brand"><span><Home /></span>UrbanNest Real Estate</Link>
+          <Link to="/" className="contact-footer-brand"><UrbanNestLogo className="contact-footer-logo" />UrbanNest Real Estate</Link>
           <nav aria-label="Footer navigation"><Link to="/">Home</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link></nav>
         </div>
         <div className="contact-footer-bottom">

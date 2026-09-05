@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Eye, EyeOff, Home, Lock, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProperties } from '../contexts/PropertiesContext';
+import { UrbanNestLogo } from '../components/UrbanNestLogo';
 
 function AuthStats({ approvedListingCount }: { approvedListingCount: number }) {
   return (
@@ -91,7 +92,7 @@ export function LoginRegister() {
           <div className="auth-story-grid" aria-hidden="true" />
           <div className="auth-story-content">
             <Link to="/" className="auth-story-brand" aria-label="UrbanNest home">
-              <span><Home /></span>
+              <UrbanNestLogo className="auth-story-logo" />
               <strong>UrbanNest</strong>
             </Link>
 
@@ -112,7 +113,7 @@ export function LoginRegister() {
         <section className="auth-form-panel">
           <div className="auth-form-card">
             <div className="auth-form-heading">
-              <span className="auth-form-mark"><Home /></span>
+              <UrbanNestLogo className="auth-form-mark" />
               <p className="auth-form-eyebrow">{isLogin ? 'Member access' : 'Join UrbanNest'}</p>
               <h2>{isLogin ? 'Sign in to UrbanNest' : 'Create your account'}</h2>
               <p>
