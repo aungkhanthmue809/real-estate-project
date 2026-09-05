@@ -31,6 +31,7 @@ const BEDROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 const BATHROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 const PARKING_OPTIONS = [0, 1, 2, 3, 4, 5];
 const YANGON_DEFAULT_CENTER: MapCoordinates = [16.8409, 96.1735];
+const SALE_STATUSES: SaleStatus[] = ['FOR_SALE', 'FOR_RENT'];
 
 interface FormData {
   title: string;
@@ -231,7 +232,12 @@ export function AddEditProperty() {
 
   const updateForm = (updates: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
-    setErrors({});
+    setErrors((current) => {
+      const remaining = { ...current };
+      Object.keys(updates).forEach((field) => delete remaining[field]);
+      delete remaining.submit;
+      return remaining;
+    });
   };
 
   const toggleFeature = (feature: string) => {
@@ -264,14 +270,35 @@ export function AddEditProperty() {
     }
   };
 
-  const validateStep = (step: number): boolean => {
+  const getStepErrors = (step: number): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
+      const validPropertyTypes: PropertyType[] = isEditing
+        ? [...PROPERTY_TYPES.map((type) => type.value), 'TOWNHOUSE']
+        : PROPERTY_TYPES.map((type) => type.value);
+      const price = Number(formData.price);
+      const area = Number(formData.area);
+
       if (!formData.title.trim()) newErrors.title = 'Title is required';
-      if (!formData.propertyType) newErrors.propertyType = 'Property type is required';
-      if (!formData.price || Number(formData.price) <= 0) newErrors.price = 'Price is required';
-      if (!formData.area || Number(formData.area) <= 0) newErrors.area = 'Area is required';
+      if (!formData.propertyType || !validPropertyTypes.includes(formData.propertyType)) {
+        newErrors.propertyType = 'Select a valid property type';
+      }
+      if (!SALE_STATUSES.includes(formData.status)) newErrors.status = 'Select a valid listing status';
+      if (!formData.price.trim() || !Number.isFinite(price) || price <= 0) {
+        newErrors.price = 'Price must be greater than 0';
+      }
+      if (!formData.area.trim() || !Number.isFinite(area) || area <= 0) {
+        newErrors.area = 'Area must be greater than 0';
+      }
+      if (!isLand) {
+        if (!Number.isInteger(formData.bedrooms) || formData.bedrooms < 0) {
+          newErrors.bedrooms = 'Bedrooms must be a non-negative whole number';
+        }
+        if (!Number.isInteger(formData.bathrooms) || formData.bathrooms < 0) {
+          newErrors.bathrooms = 'Bathrooms must be a non-negative whole number';
+        }
+      }
       if (formData.yearBuilt) {
         const year = Number(formData.yearBuilt);
         if (!Number.isInteger(year) || year < 1900 || year > 2030) {
@@ -281,7 +308,9 @@ export function AddEditProperty() {
     }
 
     if (step === 2) {
-      if (!formData.township && !existing) newErrors.township = 'Township is required';
+      if (!formData.township || !YANGON_TOWNSHIPS.some((township) => township.id === formData.township)) {
+        newErrors.township = 'Select a valid Yangon township';
+      }
       if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Street address is required';
     }
 
@@ -290,8 +319,35 @@ export function AddEditProperty() {
       if (formData.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
     }
 
+    if (step === 4 && !formData.contactPhone.trim()) {
+      newErrors.contactPhone = 'Add a phone number to your account profile before submitting';
+    }
+
+    return newErrors;
+  };
+
+  const focusFirstInvalidField = () => {
+    window.setTimeout(() => {
+      const field = document.querySelector<HTMLElement>(
+        '.form-card .form-input.error, .form-card .form-select.error, .form-card .form-textarea.error, .form-card .property-type-grid.error button, .form-card .status-toggle.error button'
+      );
+      field?.focus();
+      field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  };
+
+  const showValidationErrors = (step: number, stepErrors: Record<string, string>) => {
+    setCurrentStep(step);
+    setErrors(stepErrors);
+    focusFirstInvalidField();
+  };
+
+  const validateStep = (step: number): boolean => {
+    const newErrors = getStepErrors(step);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const valid = Object.keys(newErrors).length === 0;
+    if (!valid) focusFirstInvalidField();
+    return valid;
   };
 
   const handleNext = () => {
@@ -311,6 +367,15 @@ export function AddEditProperty() {
   };
 
   const jumpToStep = (target: number) => {
+    if (target > currentStep) {
+      for (let step = 1; step < target; step += 1) {
+        const stepErrors = getStepErrors(step);
+        if (Object.keys(stepErrors).length > 0) {
+          showValidationErrors(step, stepErrors);
+          return;
+        }
+      }
+    }
     setCurrentStep(target);
     setErrors({});
   };
@@ -338,13 +403,14 @@ export function AddEditProperty() {
       return;
     }
 
-    if (formData.yearBuilt) {
-      const year = Number(formData.yearBuilt);
-      if (!Number.isInteger(year) || year < 1900 || year > 2030) {
-        setCurrentStep(1);
-        setErrors({ yearBuilt: 'Year built must be between 1900 and 2030' });
-        return;
-      }
+    const validationResults = steps.map((step) => ({
+      step: step.id,
+      errors: getStepErrors(step.id),
+    }));
+    const firstInvalidStep = validationResults.find((result) => Object.keys(result.errors).length > 0);
+    if (firstInvalidStep) {
+      showValidationErrors(firstInvalidStep.step, firstInvalidStep.errors);
+      return;
     }
 
     setLoading(true);
@@ -553,9 +619,9 @@ export function AddEditProperty() {
 
                     <div className="form-field">
                       <label className="form-label">
-                        Listing Status
+                        Listing Status <span className="required">*</span>
                       </label>
-                      <div className="status-toggle">
+                      <div className={`status-toggle ${errors.status ? 'error' : ''}`}>
                         <button
                           type="button"
                           onClick={() => updateForm({ status: 'FOR_SALE' })}
@@ -571,6 +637,7 @@ export function AddEditProperty() {
                           For Rent
                         </button>
                       </div>
+                      {errors.status && <p className="form-error">{errors.status}</p>}
                     </div>
                   </div>
 
@@ -656,31 +723,33 @@ export function AddEditProperty() {
                       <div className="form-grid-4">
                         <div className="form-field">
                           <label className="form-label">
-                            Bedrooms
+                            Bedrooms <span className="required">*</span>
                           </label>
                           <select
                             value={formData.bedrooms}
                             onChange={(e) => updateForm({ bedrooms: Number(e.target.value) })}
-                            className="form-select"
+                            className={`form-select ${errors.bedrooms ? 'error' : ''}`}
                           >
                             {BEDROOM_OPTIONS.map((n) => (
                               <option key={n} value={n}>{n}</option>
                             ))}
                           </select>
+                          {errors.bedrooms && <p className="form-error">{errors.bedrooms}</p>}
                         </div>
                         <div className="form-field">
                           <label className="form-label">
-                            Bathrooms
+                            Bathrooms <span className="required">*</span>
                           </label>
                           <select
                             value={formData.bathrooms}
                             onChange={(e) => updateForm({ bathrooms: Number(e.target.value) })}
-                            className="form-select"
+                            className={`form-select ${errors.bathrooms ? 'error' : ''}`}
                           >
                             {BATHROOM_OPTIONS.map((n) => (
                               <option key={n} value={n}>{n}</option>
                             ))}
                           </select>
+                          {errors.bathrooms && <p className="form-error">{errors.bathrooms}</p>}
                         </div>
                         <div className="form-field">
                           <label className="form-label">
@@ -1143,9 +1212,10 @@ export function AddEditProperty() {
                           type="tel"
                           value={formData.contactPhone}
                           disabled
-                          className="form-input"
+                          className={`form-input ${errors.contactPhone ? 'error' : ''}`}
                           placeholder="09-xxxxxxxxx"
                         />
+                        {errors.contactPhone && <p className="form-error">{errors.contactPhone}</p>}
                       </div>
                       <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label">
