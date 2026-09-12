@@ -205,7 +205,7 @@ export function Home() {
 
   return (
     <div className="home-page min-h-screen">
-      <div className="home-ambient" aria-hidden="true">
+<div className="home-ambient" aria-hidden="true">
         <span className="home-ambient-one" />
         <span className="home-ambient-two" />
         <span className="home-ambient-three" />
