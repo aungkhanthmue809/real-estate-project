@@ -39,4 +39,6 @@ public class PropertyRequest {
     private Double longitude;
     private Set<String> features;
     private String imageUrl;
+    private String nrcDocumentToken;
+    private String ownershipDocumentToken;
 }

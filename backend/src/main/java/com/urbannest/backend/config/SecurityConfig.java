@@ -40,7 +40,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/uploads/properties/**").permitAll()
@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/properties/mine").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/properties", "/api/properties/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/uploads/properties").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/uploads/verification/**").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

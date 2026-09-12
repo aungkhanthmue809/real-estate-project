@@ -62,6 +62,12 @@ interface FormData {
   plotDimension: string;
   landShape: string;
   roadWidth: string;
+  nrcDocumentToken: string;
+  nrcDocumentFile: File | null;
+  nrcDocumentFileName: string;
+  ownershipDocumentToken: string;
+  ownershipDocumentFile: File | null;
+  ownershipDocumentFileName: string;
 }
 
 const INITIAL_FORM: FormData = {
@@ -93,6 +99,12 @@ const INITIAL_FORM: FormData = {
   plotDimension: '',
   landShape: '',
   roadWidth: '',
+  nrcDocumentToken: '',
+  nrcDocumentFile: null,
+  nrcDocumentFileName: '',
+  ownershipDocumentToken: '',
+  ownershipDocumentFile: null,
+  ownershipDocumentFileName: '',
 };
 
 function formFromProperty(p: Property, user: User | null): FormData {
@@ -126,6 +138,12 @@ function formFromProperty(p: Property, user: User | null): FormData {
     plotDimension: '',
     landShape: '',
     roadWidth: '',
+    nrcDocumentToken: '',
+    nrcDocumentFile: null,
+    nrcDocumentFileName: p.hasNrcDocument ? 'NRC document on file' : '',
+    ownershipDocumentToken: '',
+    ownershipDocumentFile: null,
+    ownershipDocumentFileName: p.hasOwnershipDocument ? 'Ownership document on file' : '',
   };
 }
 
@@ -270,6 +288,44 @@ export function AddEditProperty() {
     }
   };
 
+  const handleNrcUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setErrors((current) => {
+      const remaining = { ...current };
+      delete remaining.nrcDocumentToken;
+      return remaining;
+    });
+
+    try {
+      const token = await uploadAPI.uploadNrcDocument(file);
+      setFormData((current) => ({ ...current, nrcDocumentToken: token, nrcDocumentFile: file, nrcDocumentFileName: file.name }));
+    } catch (error) {
+      setErrors((current) => ({ ...current, nrcDocumentToken: getUploadErrorMessage(error) }));
+    }
+  };
+
+  const handleOwnershipUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setErrors((current) => {
+      const remaining = { ...current };
+      delete remaining.ownershipDocumentToken;
+      return remaining;
+    });
+
+    try {
+      const token = await uploadAPI.uploadOwnershipDocument(file);
+      setFormData((current) => ({ ...current, ownershipDocumentToken: token, ownershipDocumentFile: file, ownershipDocumentFileName: file.name }));
+    } catch (error) {
+      setErrors((current) => ({ ...current, ownershipDocumentToken: getUploadErrorMessage(error) }));
+    }
+  };
+
   const getStepErrors = (step: number): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
@@ -314,9 +370,23 @@ export function AddEditProperty() {
       if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Street address is required';
     }
 
-    if (step === 3) {
+if (step === 3) {
       if (!formData.description.trim()) newErrors.description = 'Description is required';
       if (formData.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
+
+      const existingProperty = existing as Property | undefined;
+      const isVerificationRequired = !isEditing || (existingProperty?.verificationRequired === true);
+      if (isVerificationRequired) {
+        if (!isEditing) {
+          if (!formData.nrcDocumentToken) newErrors.nrcDocumentToken = 'NRC document is required';
+          if (!formData.ownershipDocumentToken) newErrors.ownershipDocumentToken = 'Proof of ownership is required';
+        } else {
+          const hasNrc = formData.nrcDocumentToken || formData.nrcDocumentFileName === 'NRC document on file';
+          const hasOwnership = formData.ownershipDocumentToken || formData.ownershipDocumentFileName === 'Ownership document on file';
+          if (!hasNrc) newErrors.nrcDocumentToken = 'NRC document is required';
+          if (!hasOwnership) newErrors.ownershipDocumentToken = 'Proof of ownership is required';
+        }
+      }
     }
 
     if (step === 4 && !formData.contactPhone.trim()) {
@@ -445,12 +515,14 @@ export function AddEditProperty() {
         city: formData.city.trim() || null,
         stateRegion: formData.state.trim() || null,
         zipCode: formData.zipCode.trim() || null,
-        hasGrant: formData.hasGrant,
-        hasPermit: formData.hasPermit,
+        hasGrant: formData.hasGrant || undefined,
+        hasPermit: formData.hasPermit || undefined,
         latitude: formData.latitude,
         longitude: formData.longitude,
         features: formData.features,
         imageUrl: formData.imageUrl,
+        nrcDocumentToken: formData.nrcDocumentToken || undefined,
+        ownershipDocumentToken: formData.ownershipDocumentToken || undefined,
       };
 
       if (existing) {
@@ -1039,6 +1111,65 @@ export function AddEditProperty() {
                           </span>
                         </span>
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="verification-section">
+                    <h3 className="verification-title">
+                      <ShieldCheck className="w-5 h-5" />
+                      Ownership Verification
+                    </h3>
+                    <p className="verification-desc">
+                      These documents are used only for administrator verification and are not shown publicly.
+                    </p>
+                    <div className="verification-grid">
+                      <div className="verification-field">
+                        <label className="form-label">
+                          NRC <span className="required">*</span>
+                        </label>
+                        <p className="form-section-desc">
+                          Upload a clear image of the property owner's NRC (JPEG or PNG, max 10 MB).
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          className={`form-input ${errors.nrcDocumentToken ? 'error' : ''}`}
+                          onChange={handleNrcUpload}
+                          disabled={isEditing && !!formData.nrcDocumentFileName && !formData.nrcDocumentFile}
+                        />
+                        {formData.nrcDocumentFileName && (
+                          <p className="verification-file-name">
+                            {isEditing && !formData.nrcDocumentFile ? '📄 ' : '✅ '}
+                            {formData.nrcDocumentFileName}
+                            {isEditing && !formData.nrcDocumentFile && ' (on file)'}
+                          </p>
+                        )}
+                        {errors.nrcDocumentToken && <p className="form-error">{errors.nrcDocumentToken}</p>}
+                      </div>
+
+                      <div className="verification-field">
+                        <label className="form-label">
+                          Proof of Ownership <span className="required">*</span>
+                        </label>
+                        <p className="form-section-desc">
+                          Upload a grant, permit, title deed, ownership certificate, or other legal document (JPEG, PNG, or PDF, max 10 MB).
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,application/pdf"
+                          className={`form-input ${errors.ownershipDocumentToken ? 'error' : ''}`}
+                          onChange={handleOwnershipUpload}
+                          disabled={isEditing && !!formData.ownershipDocumentFileName && !formData.ownershipDocumentFile}
+                        />
+                        {formData.ownershipDocumentFileName && (
+                          <p className="verification-file-name">
+                            {isEditing && !formData.ownershipDocumentFile ? '📄 ' : '✅ '}
+                            {formData.ownershipDocumentFileName}
+                            {isEditing && !formData.ownershipDocumentFile && ' (on file)'}
+                          </p>
+                        )}
+                        {errors.ownershipDocumentToken && <p className="form-error">{errors.ownershipDocumentToken}</p>}
+                      </div>
                     </div>
                   </div>
                 </div>

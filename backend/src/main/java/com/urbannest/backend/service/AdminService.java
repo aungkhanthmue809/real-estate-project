@@ -8,11 +8,19 @@ import com.urbannest.backend.entity.PropertyType;
 import com.urbannest.backend.entity.SaleStatus;
 import com.urbannest.backend.entity.NotificationType;
 import com.urbannest.backend.repository.PropertyRepository;
+import com.urbannest.backend.service.VerificationDocumentStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
@@ -22,6 +30,7 @@ public class AdminService {
 
     private final PropertyRepository propertyRepository;
     private final NotificationService notificationService;
+    private final VerificationDocumentStorageService verificationDocumentStorageService;
 
     public List<PropertyResponse> getAllProperties(ApprovalStatus approvalStatus) {
         List<Property> properties;
@@ -33,10 +42,20 @@ public class AdminService {
         return properties.stream().map(this::toResponse).toList();
     }
 
-    @Transactional
+@Transactional
     public String approveProperty(Long id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        if (Boolean.TRUE.equals(property.getVerificationRequired())) {
+            if (property.getNrcDocumentPath() == null || property.getNrcDocumentPath().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot approve: NRC document is missing");
+            }
+            if (property.getOwnershipDocumentPath() == null || property.getOwnershipDocumentPath().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot approve: Ownership document is missing");
+            }
+        }
+
         boolean statusChanged = property.getApprovalStatus() != ApprovalStatus.APPROVED;
         property.setApprovalStatus(ApprovalStatus.APPROVED);
         propertyRepository.save(property);
@@ -117,6 +136,9 @@ public class AdminService {
                 .owner(p.getOwner().getUsername())
                 .ownerPhone(p.getOwner().getPhone())
                 .createdAt(p.getCreatedAt())
+                .hasNrcDocument(p.getNrcDocumentPath() != null)
+                .hasOwnershipDocument(p.getOwnershipDocumentPath() != null)
+                .verificationRequired(p.getVerificationRequired())
                 .build();
     }
 
@@ -134,5 +156,41 @@ public class AdminService {
         if (request.getLatitude() != null) property.setLatitude(request.getLatitude());
         if (request.getLongitude() != null) property.setLongitude(request.getLongitude());
         if (request.getFeatures() != null) property.setFeatures(new HashSet<>(request.getFeatures()));
+    }
+
+    public Resource downloadNrcDocument(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+        if (property.getNrcDocumentPath() == null || property.getNrcDocumentPath().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "NRC document not found");
+        }
+        try {
+            Path path = verificationDocumentStorageService.resolvePath(property.getNrcDocumentPath());
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "NRC document not found");
+            }
+            return resource;
+        } catch (MalformedURLException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not read NRC document", exception);
+        }
+    }
+
+    public Resource downloadOwnershipDocument(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+        if (property.getOwnershipDocumentPath() == null || property.getOwnershipDocumentPath().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ownership document not found");
+        }
+        try {
+            Path path = verificationDocumentStorageService.resolvePath(property.getOwnershipDocumentPath());
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ownership document not found");
+            }
+            return resource;
+        } catch (MalformedURLException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not read ownership document", exception);
+        }
     }
 }

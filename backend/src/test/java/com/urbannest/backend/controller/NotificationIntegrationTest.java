@@ -14,13 +14,16 @@ import com.urbannest.backend.repository.PropertyRepository;
 import com.urbannest.backend.repository.UserRepository;
 import com.urbannest.backend.security.CustomUserDetails;
 import com.urbannest.backend.service.AdminService;
+import com.urbannest.backend.service.VerificationDocumentStorageService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
@@ -36,6 +39,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,6 +114,7 @@ class NotificationIntegrationTest {
         User owner = createUser("property-owner");
         User unrelatedUser = createUser("property-unrelated");
         String title = "New Pending Notification Home";
+        uploadVerificationDocuments(owner);
         String requestBody = propertyRequest(title);
 
         mockMvc.perform(post("/api/properties")
@@ -348,6 +353,38 @@ class NotificationIntegrationTest {
                 .build());
     }
 
+    @Autowired
+    private VerificationDocumentStorageService verificationDocumentStorageService;
+
+    private String nrcToken;
+    private String ownershipToken;
+
+    private void uploadVerificationDocuments(User owner) throws Exception {
+        MockMultipartFile nrcFile = new MockMultipartFile(
+                "file", "nrc.jpg", "image/jpeg",
+                new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x01, 0x02}
+        );
+        MvcResult nrcResult = mockMvc.perform(multipart("/api/uploads/verification/nrc")
+                        .file(nrcFile)
+                        .with(user(new CustomUserDetails(owner))))
+                .andExpect(status().isOk())
+                .andReturn();
+        String nrcResponse = nrcResult.getResponse().getContentAsString();
+        this.nrcToken = objectMapper.readTree(nrcResponse).get("token").asText();
+
+        MockMultipartFile ownershipFile = new MockMultipartFile(
+                "file", "ownership.pdf", "application/pdf",
+                "%PDF-1.4 test".getBytes()
+        );
+        MvcResult ownershipResult = mockMvc.perform(multipart("/api/uploads/verification/ownership")
+                        .file(ownershipFile)
+                        .with(user(new CustomUserDetails(owner))))
+                .andExpect(status().isOk())
+                .andReturn();
+        String ownershipResponse = ownershipResult.getResponse().getContentAsString();
+        this.ownershipToken = objectMapper.readTree(ownershipResponse).get("token").asText();
+    }
+
     private Notification assertAdminNotification(
             User admin,
             NotificationType type,
@@ -365,18 +402,20 @@ class NotificationIntegrationTest {
     }
 
     private String propertyRequest(String title) throws Exception {
-        return objectMapper.writeValueAsString(Map.of(
-                "title", title,
-                "description", "Notification integration test property",
-                "price", 100000,
-                "location", "Yangon",
-                "propertyType", "APARTMENT",
-                "status", "FOR_SALE",
-                "bedrooms", 2,
-                "bathrooms", 1,
-                "area", 750,
-                "imageUrl", ""
-        ));
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("title", title);
+        map.put("description", "Notification integration test property");
+        map.put("price", 100000);
+        map.put("location", "Yangon");
+        map.put("propertyType", "APARTMENT");
+        map.put("status", "FOR_SALE");
+        map.put("bedrooms", 2);
+        map.put("bathrooms", 1);
+        map.put("area", 750);
+        map.put("imageUrl", "");
+        map.put("nrcDocumentToken", nrcToken);
+        map.put("ownershipDocumentToken", ownershipToken);
+        return objectMapper.writeValueAsString(map);
     }
 
     private Property createProperty(User owner, ApprovalStatus approvalStatus, String title) {

@@ -97,6 +97,22 @@ export const uploadAPI = {
     });
     return response.data.url;
   },
+  uploadNrcDocument: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<{ token: string }>('/api/uploads/verification/nrc', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data.token;
+  },
+  uploadOwnershipDocument: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<{ token: string }>('/api/uploads/verification/ownership', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data.token;
+  },
 };
 
 export const adminAPI = {
@@ -108,6 +124,10 @@ export const adminAPI = {
     api.put<Property>(`/api/admin/properties/${id}`, data),
   deleteProperty: (id: number) =>
     api.delete<{ message: string }>(`/api/admin/properties/${id}`),
+  downloadNrcDocument: (id: number) =>
+    api.get(`/api/admin/properties/${id}/verification/nrc`, { responseType: 'blob' }),
+  downloadOwnershipDocument: (id: number) =>
+    api.get(`/api/admin/properties/${id}/verification/ownership`, { responseType: 'blob' }),
   updatePostingFee: (propertyType: PropertyType, feeAmount: number) =>
     api.put<PropertyPostingFee>(`/api/admin/property-posting-fees/${propertyType}`, { feeAmount }),
   getContactMessages: () => api.get<ContactMessage[]>('/api/admin/contact-messages'),

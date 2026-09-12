@@ -133,6 +133,30 @@ export function AdminDashboard() {
   };
   const handleLogout = () => { logout(); navigate('/'); };
 
+  const handleViewNrc = async (propertyId: number) => {
+    try {
+      const response = await adminAPI.downloadNrcDocument(propertyId);
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch {
+      setError('Unable to load NRC document.');
+    }
+  };
+
+  const handleViewOwnership = async (propertyId: number) => {
+    try {
+      const response = await adminAPI.downloadOwnershipDocument(propertyId);
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch {
+      setError('Unable to load ownership document.');
+    }
+  };
+
   return (
     <div className="admin-page admin-showcase-page admin-cockpit">
       <div className="admin-ambient admin-ambient-one" /><div className="admin-ambient admin-ambient-two" /><div className="admin-ambient admin-ambient-three" />
@@ -173,7 +197,7 @@ export function AdminDashboard() {
         </section>
       </main>
 
-      {reviewing && <div className="dash-modal-overlay" onClick={() => setReviewing(null)}><div className="dash-modal admin-review-modal" onClick={(event) => event.stopPropagation()}><div className="dash-modal-header"><span className="dash-modal-title">Review Property</span><button className="dash-modal-close" onClick={() => setReviewing(null)} aria-label="Close"><X /></button></div><div className="admin-review-body">{reviewing.imageUrl ? <img src={resolvePropertyImageUrl(reviewing.imageUrl)} alt={reviewing.title} className="admin-review-thumb" /> : <div className="admin-review-thumb admin-review-thumb-fallback"><Home /></div>}<div className="admin-review-title-row"><div className="admin-review-title">{reviewing.title}</div><div className="admin-pending-price">{formatPropertyPrice(reviewing.price)}</div></div><div className="admin-review-loc"><MapPin /> {reviewing.location}</div><div className="admin-review-grid"><div className="admin-review-cell"><Bed /> {reviewing.bedrooms} beds</div><div className="admin-review-cell"><Bath /> {reviewing.bathrooms} baths</div><div className="admin-review-cell"><Square /> {reviewing.area.toLocaleString()} sqft</div><div className="admin-review-cell"><Home /> {typeLabel(reviewing.propertyType)}</div></div><div className="admin-review-meta"><div className="admin-review-meta-item"><span className="admin-review-label">Owner</span><span className="admin-review-value">{reviewing.owner} · {reviewing.ownerPhone || '—'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Listing Type</span><span className="admin-review-value">{reviewing.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Submitted</span><span className="admin-review-value">{formatDate(reviewing.createdAt)}</span></div></div><div className="admin-review-desc"><span className="admin-review-label">Description</span><p>{reviewing.description}</p></div></div>{reviewing.approvalStatus === 'PENDING' && <div className="admin-review-actions"><button onClick={() => updateStatus(reviewing.id, 'REJECTED')} className="admin-btn-reject" disabled={updatingId === reviewing.id}><XCircle />Reject Listing</button><button onClick={() => updateStatus(reviewing.id, 'APPROVED')} className="admin-btn-approve" disabled={updatingId === reviewing.id}><CheckCircle />Approve Listing</button></div>}</div></div>}
+      {reviewing && <div className="dash-modal-overlay" onClick={() => setReviewing(null)}><div className="dash-modal admin-review-modal" onClick={(event) => event.stopPropagation()}><div className="dash-modal-header"><span className="dash-modal-title">Review Property</span><button className="dash-modal-close" onClick={() => setReviewing(null)} aria-label="Close"><X /></button></div><div className="admin-review-body">{reviewing.imageUrl ? <img src={resolvePropertyImageUrl(reviewing.imageUrl)} alt={reviewing.title} className="admin-review-thumb" /> : <div className="admin-review-thumb admin-review-thumb-fallback"><Home /></div>}<div className="admin-review-title-row"><div className="admin-review-title">{reviewing.title}</div><div className="admin-pending-price">{formatPropertyPrice(reviewing.price)}</div></div><div className="admin-review-loc"><MapPin /> {reviewing.location}</div><div className="admin-review-grid"><div className="admin-review-cell"><Bed /> {reviewing.bedrooms} beds</div><div className="admin-review-cell"><Bath /> {reviewing.bathrooms} baths</div><div className="admin-review-cell"><Square /> {reviewing.area.toLocaleString()} sqft</div><div className="admin-review-cell"><Home /> {typeLabel(reviewing.propertyType)}</div></div><div className="admin-review-meta"><div className="admin-review-meta-item"><span className="admin-review-label">Owner</span><span className="admin-review-value">{reviewing.owner} · {reviewing.ownerPhone || '—'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Listing Type</span><span className="admin-review-value">{reviewing.status === 'FOR_SALE' ? 'For Sale' : 'For Rent'}</span></div><div className="admin-review-meta-item"><span className="admin-review-label">Submitted</span><span className="admin-review-value">{formatDate(reviewing.createdAt)}</span></div></div><div className="admin-review-desc"><span className="admin-review-label">Description</span><p>{reviewing.description}</p></div><div className="admin-review-verification"><span className="admin-review-label">Ownership Verification</span><div className="admin-verification-grid"><div className="admin-verification-item"><span className="admin-verification-label">NRC</span>{reviewing.hasNrcDocument ? (<> <span className="admin-verification-status">Document submitted</span> <button type="button" className="admin-verification-view" onClick={() => handleViewNrc(reviewing.id)}>View NRC</button> </>) : (<span className="admin-verification-status unavailable">Unavailable</span>)}</div><div className="admin-verification-item"><span className="admin-verification-label">Proof of Ownership</span>{reviewing.hasOwnershipDocument ? (<> <span className="admin-verification-status">Document submitted</span> <button type="button" className="admin-verification-view" onClick={() => handleViewOwnership(reviewing.id)}>View Document</button> </>) : (<span className="admin-verification-status unavailable">Unavailable</span>)}</div></div>{!reviewing.hasNrcDocument && !reviewing.hasOwnershipDocument && <p className="admin-verification-legacy">Verification documents are unavailable for this legacy/sample listing.</p>}</div></div>{reviewing.approvalStatus === 'PENDING' && <div className="admin-review-actions"><button onClick={() => updateStatus(reviewing.id, 'REJECTED')} className="admin-btn-reject" disabled={updatingId === reviewing.id}><XCircle />Reject Listing</button><button onClick={() => updateStatus(reviewing.id, 'APPROVED')} className="admin-btn-approve" disabled={updatingId === reviewing.id}><CheckCircle />Approve Listing</button></div>}</div></div>}
     </div>
   );
 }

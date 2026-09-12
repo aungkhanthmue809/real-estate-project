@@ -105,6 +105,16 @@ public class Property {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @Column(name = "nrc_document_path", length = 500)
+    private String nrcDocumentPath;
+
+    @Column(name = "ownership_document_path", length = 500)
+    private String ownershipDocumentPath;
+
+    @Builder.Default
+    @Column(name = "verification_required", nullable = false)
+    private Boolean verificationRequired = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;

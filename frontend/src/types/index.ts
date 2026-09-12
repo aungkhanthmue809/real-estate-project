@@ -87,6 +87,9 @@ export interface Property {
   owner: string;
   ownerPhone: string;
   createdAt: string;
+  hasNrcDocument?: boolean;
+  hasOwnershipDocument?: boolean;
+  verificationRequired?: boolean;
 }
 
 export interface PropertyRequest {
@@ -113,6 +116,8 @@ export interface PropertyRequest {
   longitude?: number | null;
   features?: string[];
   imageUrl: string;
+  nrcDocumentToken?: string;
+  ownershipDocumentToken?: string;
 }
 
 export interface YangonTownship {

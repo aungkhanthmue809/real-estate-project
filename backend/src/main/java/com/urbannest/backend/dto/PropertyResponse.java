@@ -46,4 +46,7 @@ public class PropertyResponse {
     private String owner;
     private String ownerPhone;
     private Instant createdAt;
+    private Boolean hasNrcDocument;
+    private Boolean hasOwnershipDocument;
+    private Boolean verificationRequired;
 }

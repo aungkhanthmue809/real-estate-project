@@ -26,6 +26,7 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final VerificationDocumentStorageService verificationDocumentStorageService;
 
     private User getCurrentUser() {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
@@ -68,9 +69,20 @@ public class PropertyService {
         return propertyRepository.findByOwner(owner).stream().map(this::toResponse).toList();
     }
 
-    @Transactional
+@Transactional
     public PropertyResponse createProperty(PropertyRequest request) {
         User owner = getCurrentUser();
+
+        if (request.getNrcDocumentToken() == null || request.getNrcDocumentToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "NRC document is required");
+        }
+        if (request.getOwnershipDocumentToken() == null || request.getOwnershipDocumentToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ownership document is required");
+        }
+
+        String nrcPath = verificationDocumentStorageService.resolvePath(request.getNrcDocumentToken()).toString();
+        String ownershipPath = verificationDocumentStorageService.resolvePath(request.getOwnershipDocumentToken()).toString();
+
         Property property = Property.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -96,6 +108,9 @@ public class PropertyService {
                 .longitude(request.getLongitude())
                 .features(request.getFeatures() == null ? new HashSet<>() : new HashSet<>(request.getFeatures()))
                 .imageUrl(request.getImageUrl())
+                .nrcDocumentPath(nrcPath)
+                .ownershipDocumentPath(ownershipPath)
+                .verificationRequired(true)
                 .owner(owner)
                 .build();
 
@@ -124,6 +139,18 @@ public class PropertyService {
         property.setBathrooms(request.getBathrooms());
         property.setArea(request.getArea());
         property.setImageUrl(request.getImageUrl());
+
+        if (request.getNrcDocumentToken() != null && !request.getNrcDocumentToken().isBlank()) {
+            String nrcPath = verificationDocumentStorageService.resolvePath(request.getNrcDocumentToken()).toString();
+            property.setNrcDocumentPath(nrcPath);
+            property.setVerificationRequired(true);
+        }
+        if (request.getOwnershipDocumentToken() != null && !request.getOwnershipDocumentToken().isBlank()) {
+            String ownershipPath = verificationDocumentStorageService.resolvePath(request.getOwnershipDocumentToken()).toString();
+            property.setOwnershipDocumentPath(ownershipPath);
+            property.setVerificationRequired(true);
+        }
+
         updateOptionalFields(property, request);
 
         property = propertyRepository.save(property);
@@ -143,7 +170,7 @@ public class PropertyService {
         return "Property deleted successfully";
     }
 
-    private PropertyResponse toResponse(Property p) {
+private PropertyResponse toResponse(Property p) {
         return PropertyResponse.builder()
                 .id(p.getId())
                 .title(p.getTitle())
@@ -173,6 +200,9 @@ public class PropertyService {
                 .owner(SamplePropertyShowcase.ownerDisplayName(p.getOwner().getUsername()))
                 .ownerPhone(p.getOwner().getPhone())
                 .createdAt(p.getCreatedAt())
+                .hasNrcDocument(p.getNrcDocumentPath() != null)
+                .hasOwnershipDocument(p.getOwnershipDocumentPath() != null)
+                .verificationRequired(p.getVerificationRequired())
                 .build();
     }
 
