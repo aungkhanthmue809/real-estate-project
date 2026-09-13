@@ -68,6 +68,14 @@ export function LoginRegister() {
       setError('Passwords do not match');
       return;
     }
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(signupForm.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!/^\+?[0-9]{8,15}$/.test(signupForm.phone)) {
+      setError('Phone number must contain 8 to 15 digits and may start with +.');
+      return;
+    }
     if (!agreeTerms) {
       setError('Please agree to the Terms of Service');
       return;

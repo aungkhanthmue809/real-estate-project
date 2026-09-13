@@ -5,6 +5,7 @@ import com.urbannest.backend.entity.User;
 import com.urbannest.backend.repository.UserRepository;
 import com.urbannest.backend.security.CustomUserDetails;
 import com.urbannest.backend.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,12 +22,12 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -43,6 +44,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .avatar(user.getAvatar())
                 .build());
     }
 }

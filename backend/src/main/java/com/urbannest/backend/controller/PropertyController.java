@@ -5,6 +5,7 @@ import com.urbannest.backend.dto.PropertyResponse;
 import com.urbannest.backend.entity.PropertyType;
 import com.urbannest.backend.entity.SaleStatus;
 import com.urbannest.backend.service.PropertyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,12 +43,12 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<PropertyResponse> createProperty(@RequestBody PropertyRequest request) {
+    public ResponseEntity<PropertyResponse> createProperty(@Valid @RequestBody PropertyRequest request) {
         return ResponseEntity.ok(propertyService.createProperty(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PropertyResponse> updateProperty(@PathVariable Long id, @RequestBody PropertyRequest request) {
+    public ResponseEntity<PropertyResponse> updateProperty(@PathVariable Long id, @Valid @RequestBody PropertyRequest request) {
         return ResponseEntity.ok(propertyService.updateProperty(id, request));
     }
 

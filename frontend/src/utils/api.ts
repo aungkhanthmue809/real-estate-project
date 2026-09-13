@@ -46,7 +46,7 @@ export const authAPI = {
 };
 
 export const userAPI = {
-  updateProfile: (data: { email?: string; phone?: string }) =>
+  updateProfile: (data: { email?: string; phone?: string; avatar?: string }) =>
     api.put<User>('/api/users/me', data),
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.put<{ message: string }>('/api/users/me/password', data),

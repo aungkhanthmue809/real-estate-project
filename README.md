@@ -45,6 +45,7 @@ Public registration always creates a `USER`. It cannot be used to request the `A
 - Validated local JPEG, PNG, and WebP image uploads
 - Leaflet/OpenStreetMap coordinate selection and property maps
 - Admin property moderation and user management
+- Property ownership verification with NRC and legal document uploads (private, admin-only access)
 - English-only user interface
 - Opt-in bundled sample-data import
 - Versioned PostgreSQL schema management with Flyway
@@ -97,6 +98,13 @@ Current migrations:
 | `V1__create_initial_schema.sql` | Initial users, properties, and feature schema. |
 | `V2__expand_property_model.sql` | Expanded property metadata and structured location model. |
 | `V3__backfill_sample_property_locations.sql` | Structured location backfill restricted to sample-owned properties. |
+| `V4__improve_sample_property_showcase_data.sql` | Enhanced sample property showcase data. |
+| `V5__create_property_posting_fees.sql` | Property posting fees table and management. |
+| `V6__create_contact_messages.sql` | Contact messages table for user inquiries. |
+| `V7__create_notifications.sql` | Notifications system with user-scoped notifications. |
+| `V8__extend_notification_types.sql` | Extended notification types for property events. |
+| `V9__add_property_submitted_notification_type.sql` | Added property submitted notification type. |
+| `V10__add_verification_documents.sql` | Added NRC and ownership document paths with verification flag for property ownership verification. |
 
 ## Request / Data Flow
 
@@ -347,6 +355,22 @@ $env:APP_UPLOAD_DIR = "C:\path\to\urbannest-uploads"
 
 The configured directory is the upload root; property images are stored in its `properties/` child directory.
 
+## Property Ownership Verification
+
+When a normal user submits a new property, they must provide two verification documents:
+
+1. **NRC (National Registration Card)** - A clear image of the property owner's NRC (JPEG/PNG, max 10 MB)
+2. **Proof of Ownership** - A legal document proving ownership (grant, permit, title deed, ownership certificate, or other valid document; JPEG/PNG/PDF, max 10 MB)
+
+These documents are:
+- **Private**: Stored in a separate private directory (`uploads/verification/<user-id>/`) with UUID filenames
+- **Not publicly accessible**: No static resource mapping exposes them
+- **Admin-only access**: Only administrators can view/download via `GET /api/admin/properties/{id}/verification/nrc` and `GET /api/admin/properties/{id}/verification/ownership`
+- **Manual review only**: The platform does not perform OCR or automatic government verification; administrators manually review documents before approving a property
+- **Required for approval**: Properties with `verification_required = true` cannot be approved unless both documents are present
+
+Legacy/sample properties have `verification_required = false` and can be approved without documents.
+
 ### 10. First-run checklist
 
 - PostgreSQL is running.
@@ -363,6 +387,9 @@ The configured directory is the upload root; property images are stored in its `
 - OpenStreetMap tile rendering depends on browser network access.
 - Client-side filtering is appropriate for the current dataset size; it does not provide server-side pagination or large-catalog search.
 - Favorites are browser-local but isolated by authenticated user ID; they are not stored in PostgreSQL.
+- No payment system is implemented.
+- Ownership verification is manual admin review only; the platform does not perform OCR or automatic government verification.
+- Verification documents are stored privately and never exposed publicly.
 - Keep datasource credentials, JWT secrets, admin seed values, and runtime uploads outside Git.
 
 ## Verification

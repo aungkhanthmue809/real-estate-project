@@ -30,6 +30,7 @@ public class UserService {
         User user = getCurrentUser();
         if (request.getEmail() != null) user.setEmail(request.getEmail());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getAvatar() != null) user.setAvatar(request.getAvatar());
         return userRepository.save(user);
     }
 

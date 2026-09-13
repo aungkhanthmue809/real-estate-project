@@ -31,4 +31,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.USER;
+
+    @Column(columnDefinition = "TEXT")
+    private String avatar;
 }

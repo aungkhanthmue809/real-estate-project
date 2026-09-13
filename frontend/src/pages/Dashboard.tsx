@@ -31,7 +31,7 @@ import { formatPropertyPrice } from '../utils/price';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { properties, myProperties, deleteProperty, loading, error, refreshMyProperties } = useProperties();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +39,8 @@ export function Dashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [editPhone, setEditPhone] = useState(user?.phone || '');
-  const [editPassword, setEditPassword] = useState('');
+  const [editCurrentPassword, setEditCurrentPassword] = useState('');
+  const [editNewPassword, setEditNewPassword] = useState('');
   const [editConfirm, setEditConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
@@ -76,30 +77,59 @@ export function Dashboard() {
   const openEditModal = () => {
     setEditEmail(user?.email || '');
     setEditPhone(user?.phone || '');
-    setEditPassword('');
+    setEditCurrentPassword('');
+    setEditNewPassword('');
     setEditConfirm('');
     setPasswordError('');
     setShowEditModal(true);
   };
 
-  const handleSaveProfile = () => {
-    if (editPassword || editConfirm) {
-      if (editPassword.length < 6) {
-        setPasswordError('Password must be at least 6 characters.');
+  const handleSaveProfile = async () => {
+    setPasswordError('');
+
+    // Handle password change if requested
+    if (editNewPassword || editConfirm || editCurrentPassword) {
+      if (!editCurrentPassword) {
+        setPasswordError('Current password is required to change password.');
         return;
       }
-      if (editPassword !== editConfirm) {
-        setPasswordError('Passwords do not match.');
+      if (editNewPassword.length < 8) {
+        setPasswordError('New password must be at least 8 characters.');
+        return;
+      }
+      if (editNewPassword !== editConfirm) {
+        setPasswordError('New passwords do not match.');
+        return;
+      }
+      try {
+        await changePassword({ currentPassword: editCurrentPassword, newPassword: editNewPassword });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to change password.';
+        if (err && typeof err === 'object' && 'response' in err) {
+          const axiosErr = err as { response?: { data?: { message?: string } } };
+          const backendMsg = axiosErr.response?.data?.message;
+          if (backendMsg) setPasswordError(backendMsg);
+          else setPasswordError(msg);
+        } else {
+          setPasswordError(msg);
+        }
         return;
       }
     }
-    updateProfile({
+
+    // Update profile (email, phone, avatar)
+    if (editPhone && !/^\+?[0-9]{8,15}$/.test(editPhone)) {
+      setPasswordError('Phone number must contain 8 to 15 digits and may start with +.');
+      return;
+    }
+    await updateProfile({
       email: editEmail,
       phone: editPhone,
-      ...(editPassword ? { password: editPassword } : {}),
     });
+
     setShowEditModal(false);
-    setEditPassword('');
+    setEditCurrentPassword('');
+    setEditNewPassword('');
     setEditConfirm('');
     setPasswordError('');
   };
@@ -475,12 +505,24 @@ export function Dashboard() {
               />
             </div>
             <div className="form-field">
+              <label className="form-label">Current Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={editCurrentPassword}
+                onChange={(e) => { setEditCurrentPassword(e.target.value); setPasswordError(''); }}
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+              <p className="form-hint">Required to change your password.</p>
+            </div>
+            <div className="form-field">
               <label className="form-label">New Password</label>
               <input
                 type="password"
                 className="form-input"
-                value={editPassword}
-                onChange={(e) => { setEditPassword(e.target.value); setPasswordError(''); }}
+                value={editNewPassword}
+                onChange={(e) => { setEditNewPassword(e.target.value); setPasswordError(''); }}
                 placeholder="••••••••"
                 autoComplete="new-password"
               />

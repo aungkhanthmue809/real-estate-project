@@ -5,10 +5,12 @@ import { authAPI, userAPI } from '../utils/api';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string, phone: string) => Promise<void>;
   logout: () => void;
-  updateProfile: (data: { email?: string; phone?: string; avatar?: string; password?: string }) => void;
+  updateProfile: (data: { email?: string; phone?: string; avatar?: string }) => Promise<void>;
+  changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,8 +18,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const TOKEN_KEY = 'urbannest-token';
 const USER_KEY = 'urbannest-user';
 
-function toSessionUser(data: { id: number; username: string; email: string; phone: string; role: 'USER' | 'ADMIN' }): User {
-  return { id: data.id, username: data.username, email: data.email, phone: data.phone, role: data.role };
+function toSessionUser(data: { id: number; username: string; email: string; phone: string; role: 'USER' | 'ADMIN'; avatar?: string }): User {
+  return { id: data.id, username: data.username, email: data.email, phone: data.phone, role: data.role, avatar: data.avatar };
 }
 
 function loadStoredUser(): User | null {
@@ -32,7 +34,7 @@ function loadStoredUser(): User | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -40,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!token) {
       setUser(null);
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authAPI.me()
       .then((res) => {
-        const current: User = { ...toSessionUser(res.data), ...(storedUser?.avatar ? { avatar: storedUser.avatar } : {}) };
+        const current: User = toSessionUser(res.data);
         setUser(current);
         localStorage.setItem(USER_KEY, JSON.stringify(current));
       })
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -86,18 +88,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_KEY);
   };
 
-  const updateProfile = (data: { email?: string; phone?: string; avatar?: string; password?: string }) => {
-    if (user) {
-      const updated = { ...user, ...data };
-      setUser(updated);
-      localStorage.setItem(USER_KEY, JSON.stringify(updated));
-      if (data.email !== undefined || data.phone !== undefined) {
-        userAPI.updateProfile({ email: data.email, phone: data.phone }).catch(() => {});
-      }
-    }
+  const updateProfile = async (data: { email?: string; phone?: string; avatar?: string }) => {
+    if (!user) return;
+    await userAPI.updateProfile({ email: data.email, phone: data.phone, avatar: data.avatar });
+    const updated = { ...user, ...data };
+    setUser(updated);
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
   };
 
-  if (loading) {
+  const changePassword = async (data: { currentPassword: string; newPassword: string }) => {
+    await userAPI.changePassword(data);
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -106,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

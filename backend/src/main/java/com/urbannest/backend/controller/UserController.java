@@ -4,6 +4,7 @@ import com.urbannest.backend.dto.ChangePasswordRequest;
 import com.urbannest.backend.dto.UpdateProfileRequest;
 import com.urbannest.backend.entity.User;
 import com.urbannest.backend.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,12 @@ public class UserController {
     private final UserService userService;
 
     @PutMapping("/me")
-    public ResponseEntity<User> updateProfile(@RequestBody UpdateProfileRequest request) {
+    public ResponseEntity<User> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(request));
     }
 
     @PutMapping("/me/password")
-    public ResponseEntity<Map<String, String>> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         String message = userService.changePassword(request);
         return ResponseEntity.ok(Map.of("message", message));
     }

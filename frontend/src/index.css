@@ -10355,7 +10355,7 @@ body {
 .admin-cockpit-tabs { display: flex; min-width: 0; align-items: center; gap: 5px; margin-bottom: 18px; padding: 6px; overflow-x: auto; border: 1px solid rgba(226,191,178,.32); border-radius: 14px; background: rgba(255,255,255,.84); box-shadow: 0 5px 16px rgba(90,52,34,.06); backdrop-filter: blur(16px); }
 .admin-cockpit-tabs button { display: flex; min-width: max-content; align-items: center; gap: 8px; padding: 10px 15px; border: 0; border-radius: 9px; color: #80665b; background: transparent; font-size: 11px; font-weight: 700; cursor: pointer; }
 .admin-cockpit-tabs button span { min-width: 21px; padding: 3px 6px; border-radius: 999px; color: #80665b; background: #eee7e3; font-size: 8px; }
-.admin-cockpit-tabs button.active { color: #fff; background: #33251f; box-shadow: 0 4px 12px rgba(51,37,31,.18); }.admin-cockpit-tabs button.active span { color: #fff; background: #cc4900; }
+.admin-cockpit-tabs button.active { color: #8b3100; background: #fff0e8; box-shadow: 0 4px 12px rgba(204,73,0,.12); }.admin-cockpit-tabs button.active span { color: #fff; background: #cc4900; }
 .admin-cockpit-tabs > small { margin-left: auto; padding: 0 10px; color: #a18478; font-size: 9px; font-weight: 650; white-space: nowrap; }
 .admin-cockpit-queue { display: flex; flex-direction: column; gap: 20px; }
 .admin-cockpit-empty { display: grid; min-height: 260px; place-items: center; align-content: center; gap: 12px; border: 1px solid rgba(226,191,178,.36); border-radius: 18px; color: #8e7166; background: rgba(255,255,255,.78); }.admin-cockpit-empty svg { width: 28px; }.admin-cockpit-empty strong { font-size: 12px; }.admin-cockpit-empty.error { color:#9f1515; }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { AboutUs } from './pages/AboutUs';
@@ -14,15 +14,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PropertiesProvider } from './contexts/PropertiesContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import './App.css';
 
 function AppRoutes() {
-  const location = useLocation();
-  const isAdmin = location.pathname.startsWith('/admin');
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {!isAdmin && <Navbar />}
+      <Navbar />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -31,16 +29,29 @@ function AppRoutes() {
           <Route path="/privacy" element={<LegalPage section="privacy" />} />
           <Route path="/terms" element={<LegalPage section="terms" />} />
           <Route path="/cookies" element={<LegalPage section="cookies" />} />
-          <Route path="/login" element={<LoginRegister />} />
-          <Route path="/register" element={<LoginRegister />} />
-          <Route path="/property/:id" element={<PropertyDetails />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user/my-properties" element={<Dashboard />} />
-          <Route path="/property/add" element={<AddEditProperty />} />
-          <Route path="/property/edit/:id" element={<AddEditProperty />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/manage-all" element={<AdminDataManagement />} />
+
+          <Route element={<PublicRoute><LoginRegister /></PublicRoute>}>
+            <Route path="/login" element={<LoginRegister />} />
+            <Route path="/register" element={<LoginRegister />} />
+          </Route>
+
+          <Route element={<ProtectedRoute><PropertyDetails /></ProtectedRoute>}>
+            <Route path="/property/:id" element={<PropertyDetails />} />
+          </Route>
+
+          <Route element={<ProtectedRoute><Dashboard /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/user/my-properties" element={<Dashboard />} />
+          </Route>
+
+          <Route element={<ProtectedRoute><AddEditProperty /></ProtectedRoute>}>
+            <Route path="/property/add" element={<AddEditProperty />} />
+            <Route path="/property/edit/:id" element={<AddEditProperty />} />
+          </Route>
+
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/manage-all" element={<ProtectedRoute requireAdmin><AdminDataManagement /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>

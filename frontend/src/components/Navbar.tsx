@@ -9,6 +9,12 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+
+  // Hide global navbar on admin routes - admin pages have their own admin navigation
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
   const isHome = location.pathname === '/';
   const usesShowcaseNavbar = isHome
     || location.pathname.startsWith('/property/')
