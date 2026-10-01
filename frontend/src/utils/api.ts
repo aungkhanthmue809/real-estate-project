@@ -51,6 +51,8 @@ export const userAPI = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.put<{ message: string }>('/api/users/me/password', data),
   getAll: () => api.get<User[]>('/api/users'),
+  createAdmin: (data: { username: string; email: string; phone: string; password: string; confirmPassword: string }) =>
+    api.post<User>('/api/admin/users/admin', data),
   updateRole: (id: number, role: string) =>
     api.put<User>(`/api/users/${id}`, { role }),
   delete: (id: number) =>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { AtSign, CheckCircle, ChevronLeft, ChevronRight, LogOut, Mail, Phone, Search, ShieldCheck, Trash2, UserRound, Users, XCircle } from 'lucide-react';
+import { isAxiosError } from 'axios';
+import { AtSign, CheckCircle, ChevronLeft, ChevronRight, LogOut, Mail, Phone, PlusCircle, Search, ShieldCheck, Trash2, UserRound, Users, X, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { NotificationsBell } from '../components/NotificationsBell';
 import { UrbanNestLogo } from '../components/UrbanNestLogo';
@@ -9,9 +10,17 @@ import type { User } from '../types';
 
 type RoleFilter = 'ALL' | User['role'];
 type PaginationItem = number | 'ellipsis';
+type AdminForm = { username: string; email: string; phone: string; password: string; confirmPassword: string };
 
 const USERS_PER_PAGE = 10;
+const EMPTY_ADMIN_FORM: AdminForm = { username: '', email: '', phone: '', password: '', confirmPassword: '' };
 const initial = (name: string) => (name || 'U').charAt(0).toUpperCase();
+
+const getAdminErrorMessage = (error: unknown) => {
+  if (!isAxiosError(error)) return 'Unable to create the administrator. Please try again.';
+  const data = error.response?.data as { message?: string; detail?: string; errors?: Record<string, string> } | undefined;
+  return data?.message || data?.detail || (data?.errors && Object.values(data.errors)[0]) || 'Unable to create the administrator. Please try again.';
+};
 
 function getPaginationItems(totalPages: number, currentPage: number): PaginationItem[] {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -37,6 +46,10 @@ export function AdminDataManagement() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [adminForm, setAdminForm] = useState<AdminForm>(EMPTY_ADMIN_FORM);
+  const [adminFormError, setAdminFormError] = useState('');
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -129,7 +142,7 @@ export function AdminDataManagement() {
   };
 
   const saveRole = async () => {
-    if (!selectedUser || roleDraft === selectedUser.role) return;
+    if (!selectedUser || selectedUser.role === 'ADMIN' || roleDraft === selectedUser.role) return;
     setUpdatingId(selectedUser.id);
     setError('');
     setNotice('');
@@ -142,6 +155,47 @@ export function AdminDataManagement() {
       setRoleDraft(selectedUser.role);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const openCreateAdmin = () => {
+    setAdminForm(EMPTY_ADMIN_FORM);
+    setAdminFormError('');
+    setShowCreateAdmin(true);
+  };
+
+  const closeCreateAdmin = () => {
+    if (creatingAdmin) return;
+    setShowCreateAdmin(false);
+    setAdminFormError('');
+  };
+
+  const submitCreateAdmin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const username = adminForm.username.trim();
+    const email = adminForm.email.trim();
+    const phone = adminForm.phone.trim();
+    if (!/^[a-zA-Z0-9_]{3,50}$/.test(username)) return setAdminFormError('Username must be 3–50 characters using only letters, numbers, or underscores.');
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) return setAdminFormError('Enter a valid email address.');
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) return setAdminFormError('Phone number must contain 8–15 digits and may start with +.');
+    if (adminForm.password.length < 8 || adminForm.password.length > 100) return setAdminFormError('Password must be between 8 and 100 characters.');
+    if (adminForm.password !== adminForm.confirmPassword) return setAdminFormError('Passwords do not match.');
+
+    setCreatingAdmin(true);
+    setAdminFormError('');
+    setError('');
+    setNotice('');
+    try {
+      const { data } = await userAPI.createAdmin({ username, email, phone, password: adminForm.password, confirmPassword: adminForm.confirmPassword });
+      const refreshedUsers = await userAPI.getAll();
+      setUsers(refreshedUsers.data);
+      setShowCreateAdmin(false);
+      setAdminForm(EMPTY_ADMIN_FORM);
+      setNotice(`${data.username} was created as an administrator.`);
+    } catch (error) {
+      setAdminFormError(getAdminErrorMessage(error));
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
@@ -176,7 +230,7 @@ export function AdminDataManagement() {
       </div></header>
 
       <main className="admin-cockpit-main admin-users-main">
-        <section className="admin-cockpit-intro admin-users-intro"><div><span className="admin-header-kicker"><i />Account administration</span><h1>User Directory &amp; Role Governance</h1><p>Review registered UrbanNest accounts, find member contact details, and govern USER or ADMIN access from one focused workspace.</p></div></section>
+        <section className="admin-cockpit-intro admin-users-intro"><div><span className="admin-header-kicker"><i />Account administration</span><h1>User Directory &amp; Role Governance</h1><p>Review registered UrbanNest accounts, find member contact details, and govern USER or ADMIN access from one focused workspace.</p></div><button type="button" className="admin-create-admin-trigger" onClick={openCreateAdmin}><PlusCircle />Add New Admin</button></section>
         {(loading || error || notice) && <div className={`admin-cockpit-notice${error ? ' error' : notice ? ' success' : ''}`} role="status" aria-live="polite">{loading ? 'Loading the user directory...' : error || notice}</div>}
 
         <section className="admin-cockpit-metrics" aria-label="User metrics">{metrics.map((metric) => <article key={metric.label} className={`admin-cockpit-metric ${metric.tone}`}><div><span>{metric.label}</span><span className="admin-cockpit-metric-icon"><metric.icon /></span></div><strong>{metric.value}</strong><small>{metric.meta}</small></article>)}</section>
@@ -238,12 +292,13 @@ export function AdminDataManagement() {
             {!selectedUser ? <div className="admin-users-empty"><UserRound /><strong>No user selected.</strong><span>Select an account to view its details.</span></div> : <>
               <div className="admin-user-detail-hero"><div className="admin-user-detail-avatar">{selectedUser.avatar ? <img src={selectedUser.avatar} alt="" /> : initial(selectedUser.username)}</div><div><span className={`admin-user-role ${selectedUser.role.toLowerCase()}`}>{selectedUser.role}</span><h2>{selectedUser.username}</h2><p>User ID #{selectedUser.id}</p></div></div>
               <div className="admin-user-detail-section"><div className="admin-user-detail-heading"><span><AtSign /></span><div><h3>Account details</h3><p>Persisted registration information.</p></div></div><dl className="admin-user-detail-data"><div><dt>Email address</dt><dd>{selectedUser.email}</dd></div><div><dt>Phone number</dt><dd>{selectedUser.phone || 'Not provided'}</dd></div><div><dt>Username</dt><dd>{selectedUser.username}</dd></div><div><dt>Database ID</dt><dd>#{selectedUser.id}</dd></div></dl></div>
-              <div className="admin-user-detail-section"><div className="admin-user-detail-heading"><span><ShieldCheck /></span><div><h3>Role governance</h3><p>Change this account's existing application role.</p></div></div><label className="admin-user-role-control"><span>Assigned role</span><select value={roleDraft} onChange={(event) => setRoleDraft(event.target.value as User['role'])}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label><button type="button" className="admin-user-save-role" onClick={saveRole} disabled={updatingId === selectedUser.id || roleDraft === selectedUser.role}><CheckCircle />{updatingId === selectedUser.id ? 'Saving role...' : 'Save role change'}</button></div>
+              <div className="admin-user-detail-section"><div className="admin-user-detail-heading"><span><ShieldCheck /></span><div><h3>Role governance</h3><p>{selectedUser.role === 'ADMIN' ? 'Administrator roles are immutable.' : 'Promote this account to administrator access.'}</p></div></div>{selectedUser.role === 'ADMIN' ? <div className="admin-admin-role-locked"><ShieldCheck />ADMIN access is permanent.</div> : <><label className="admin-user-role-control"><span>Assigned role</span><select value={roleDraft} onChange={(event) => setRoleDraft(event.target.value as User['role'])}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label><button type="button" className="admin-user-save-role" onClick={saveRole} disabled={updatingId === selectedUser.id || roleDraft === selectedUser.role}><CheckCircle />{updatingId === selectedUser.id ? 'Saving role...' : 'Save role change'}</button></>}</div>
               <div className="admin-user-danger-zone"><div><h3>Delete account</h3><p>Permanently remove this registered user using the existing admin endpoint.</p></div>{confirmDeleteId === selectedUser.id ? <div className="admin-user-delete-confirm"><p>Delete <strong>{selectedUser.username}</strong>? This action cannot be undone.</p><div><button type="button" onClick={() => setConfirmDeleteId(null)} disabled={deletingId === selectedUser.id}>Cancel</button><button type="button" className="danger" onClick={deleteUser} disabled={deletingId === selectedUser.id}>{deletingId === selectedUser.id ? 'Deleting...' : 'Confirm delete'}</button></div></div> : <button type="button" className="admin-user-delete" onClick={() => setConfirmDeleteId(selectedUser.id)}><Trash2 />Delete user</button>}</div>
             </>}
           </aside>
         </section>
       </main>
+      {showCreateAdmin && <div className="dash-modal-overlay admin-create-admin-overlay" onMouseDown={closeCreateAdmin}><div className="dash-modal admin-create-admin-modal" role="dialog" aria-modal="true" aria-labelledby="create-admin-title" onMouseDown={(event) => event.stopPropagation()}><div className="dash-modal-header"><span className="dash-modal-title" id="create-admin-title">Add New Admin</span><button type="button" className="dash-modal-close" onClick={closeCreateAdmin} aria-label="Close"><X /></button></div><p className="admin-create-admin-intro">Create an administrator account directly. The role is assigned securely by the server.</p><form onSubmit={submitCreateAdmin} noValidate><div className="admin-create-admin-grid"><label>Username<input autoComplete="username" value={adminForm.username} onChange={(event) => setAdminForm((current) => ({ ...current, username: event.target.value }))} required /></label><label>Email<input type="email" autoComplete="email" value={adminForm.email} onChange={(event) => setAdminForm((current) => ({ ...current, email: event.target.value }))} required /></label><label>Phone number<input type="tel" autoComplete="tel" value={adminForm.phone} onChange={(event) => setAdminForm((current) => ({ ...current, phone: event.target.value }))} required /></label><label>Password<input type="password" autoComplete="new-password" value={adminForm.password} onChange={(event) => setAdminForm((current) => ({ ...current, password: event.target.value }))} required /></label><label>Confirm password<input type="password" autoComplete="new-password" value={adminForm.confirmPassword} onChange={(event) => setAdminForm((current) => ({ ...current, confirmPassword: event.target.value }))} required /></label></div>{adminFormError && <p className="admin-create-admin-error" role="alert">{adminFormError}</p>}<div className="dash-modal-actions"><button type="button" className="dash-modal-btn cancel" onClick={closeCreateAdmin} disabled={creatingAdmin}>Cancel</button><button type="submit" className="dash-modal-btn save" disabled={creatingAdmin}>{creatingAdmin ? 'Creating...' : 'Create Admin'}</button></div></form></div></div>}
     </div>
   );
 }

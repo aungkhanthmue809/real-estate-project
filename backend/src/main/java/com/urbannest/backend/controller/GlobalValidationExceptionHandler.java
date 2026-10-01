@@ -52,6 +52,15 @@ public class GlobalValidationExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", ex.getMessage() == null ? "The request is invalid" : ex.getMessage());
+        return ResponseEntity.badRequest().body(body);
+    }
+
     private String extractFieldName(String propertyPath) {
         int lastDot = propertyPath.lastIndexOf('.');
         return lastDot >= 0 ? propertyPath.substring(lastDot + 1) : propertyPath;
