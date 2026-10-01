@@ -1,5 +1,6 @@
+import { AdminNavigation } from '../components/AdminNavigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, Filter, LogOut, Search, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { NotificationsBell } from '../components/NotificationsBell';
@@ -17,7 +18,6 @@ const statusLabel = (value: ApprovalStatus) => value.charAt(0) + value.slice(1).
 
 export function AdminUploadHistory() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout } = useAuth();
   const [records, setRecords] = useState<PropertyUploadHistoryItem[]>([]);
   const [page, setPage] = useState(0);
@@ -68,7 +68,7 @@ export function AdminUploadHistory() {
     <div className="admin-ambient admin-ambient-one" /><div className="admin-ambient admin-ambient-two" /><div className="admin-ambient admin-ambient-three" />
     <header className="admin-cockpit-topbar"><div className="admin-cockpit-topbar-inner">
       <Link to="/admin/dashboard" className="admin-cockpit-brand"><UrbanNestLogo className="admin-cockpit-logo" /><span><strong>UrbanNest</strong><small>Admin Workspace</small></span></Link>
-      <nav className="admin-cockpit-nav" aria-label="Admin navigation"><Link to="/admin/dashboard">Properties</Link><Link to="/admin/manage-all?tab=users">Users</Link><Link to="/admin/upload-history" className={location.pathname === '/admin/upload-history' ? 'active' : ''}>Upload History</Link><Link to="/dashboard">Dashboard</Link><Link to="/">Main Site</Link></nav>
+      <AdminNavigation />
       <div className="admin-cockpit-account"><span className="admin-console-state"><i />Console active</span><NotificationsBell /><div className="admin-cockpit-identity"><span className="admin-cockpit-avatar">{user?.avatar ? <img src={user.avatar} alt={user.username} /> : initial(user?.username || 'A')}</span><span><strong>{user?.username || 'admin'}</strong><small>Administrator</small></span></div><button type="button" className="admin-cockpit-logout" onClick={handleLogout} aria-label="Sign out"><LogOut /></button></div>
     </div></header>
     <main className="admin-cockpit-main">

@@ -1,5 +1,6 @@
+import { AdminNavigation } from '../components/AdminNavigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { AtSign, CheckCircle, ChevronLeft, ChevronRight, LogOut, Mail, Phone, PlusCircle, Search, ShieldCheck, Trash2, UserRound, Users, X, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,7 +32,6 @@ function getPaginationItems(totalPages: number, currentPage: number): Pagination
 
 export function AdminDataManagement() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
@@ -225,7 +225,7 @@ export function AdminDataManagement() {
       <div className="admin-ambient admin-ambient-one" /><div className="admin-ambient admin-ambient-two" /><div className="admin-ambient admin-ambient-three" />
       <header className="admin-cockpit-topbar"><div className="admin-cockpit-topbar-inner">
         <Link to="/admin/dashboard" className="admin-cockpit-brand"><UrbanNestLogo className="admin-cockpit-logo" /><span><strong>UrbanNest</strong><small>Admin Workspace</small></span></Link>
-        <nav className="admin-cockpit-nav" aria-label="Admin navigation"><Link to="/admin/dashboard" className={location.pathname === '/admin' || location.pathname === '/admin/dashboard' ? 'active' : ''}>Properties</Link><Link to="/admin/manage-all?tab=users" className={location.pathname === '/admin/manage-all' ? 'active' : ''}>Users</Link><Link to="/admin/upload-history" className={location.pathname === '/admin/upload-history' ? 'active' : ''}>Upload History</Link><Link to="/dashboard">Dashboard</Link><Link to="/">Main Site</Link></nav>
+        <AdminNavigation />
         <div className="admin-cockpit-account"><span className="admin-console-state"><i />Console active</span><NotificationsBell /><div className="admin-cockpit-identity"><span className="admin-cockpit-avatar">{user?.avatar ? <img src={user.avatar} alt={user.username} /> : initial(user?.username || 'A')}</span><span><strong>{user?.username || 'admin'}</strong><small>Administrator</small></span></div><button type="button" className="admin-cockpit-logout" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut /></button></div>
       </div></header>
 

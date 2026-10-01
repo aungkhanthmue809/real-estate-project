@@ -8,11 +8,19 @@ interface DonutChartProps {
   segments: DonutSegment[];
   total: number;
   centerLabel?: string;
+  compactCenterValue?: boolean;
   ariaLabel: string;
   size?: number;
 }
 
-export function DonutChart({ segments, total, centerLabel, ariaLabel, size = 112 }: DonutChartProps) {
+function formatCompactNumber(value: number) {
+  const format = (scaled: number, suffix: string) => `${scaled.toFixed(1).replace(/\.0$/, '')}${suffix}`;
+  if (Math.abs(value) >= 1_000_000) return format(value / 1_000_000, 'M');
+  if (Math.abs(value) >= 1_000) return format(value / 1_000, 'K');
+  return value.toLocaleString();
+}
+
+export function DonutChart({ segments, total, centerLabel, compactCenterValue = false, ariaLabel, size = 112 }: DonutChartProps) {
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const usableSegments = segments.filter((segment) => segment.value > 0);
@@ -29,7 +37,7 @@ export function DonutChart({ segments, total, centerLabel, ariaLabel, size = 112
           return circle;
         })}
       </svg>
-      <span className="admin-donut-center"><strong>{total.toLocaleString()}</strong>{centerLabel && <small>{centerLabel}</small>}</span>
+      <span className="admin-donut-center"><strong>{compactCenterValue ? formatCompactNumber(total) : total.toLocaleString()}</strong>{centerLabel && <small>{centerLabel}</small>}</span>
     </div>
   );
 }
