@@ -41,6 +41,16 @@ public class PropertyPostingFeeService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public BigDecimal getCurrentFee(PropertyType propertyType) {
+        if (!CONFIGURABLE_TYPES.contains(propertyType)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Posting fee not found");
+        }
+        return repository.findById(propertyType)
+                .map(PropertyPostingFee::getFeeAmount)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Posting fee not found"));
+    }
+
     @Transactional
     public PropertyPostingFeeResponse update(PropertyType propertyType, BigDecimal feeAmount) {
         if (!CONFIGURABLE_TYPES.contains(propertyType)) {

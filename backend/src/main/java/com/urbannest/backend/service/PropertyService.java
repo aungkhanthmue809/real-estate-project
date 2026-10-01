@@ -27,6 +27,7 @@ public class PropertyService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final VerificationDocumentStorageService verificationDocumentStorageService;
+    private final PropertyPostingFeeService propertyPostingFeeService;
 
     private User getCurrentUser() {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
@@ -87,6 +88,7 @@ public class PropertyService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .price(request.getPrice())
+                .postingFeeAtSubmission(propertyPostingFeeService.getCurrentFee(request.getPropertyType()))
                 .location(request.getLocation())
                 .propertyType(request.getPropertyType())
                 .status(request.getStatus())

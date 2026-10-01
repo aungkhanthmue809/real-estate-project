@@ -32,6 +32,13 @@ public class Property {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    /**
+     * Fee schedule value captured when this property was first submitted.
+     * Nullable so legacy properties retain an unknown historical fee.
+     */
+    @Column(name = "posting_fee_at_submission", precision = 12, scale = 0)
+    private BigDecimal postingFeeAtSubmission;
+
     @Column(nullable = false)
     private String location;
 
