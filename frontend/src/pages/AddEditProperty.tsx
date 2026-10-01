@@ -188,6 +188,7 @@ export function AddEditProperty() {
   const { myProperties, loading: propertiesLoading, addProperty, updateProperty } = useProperties();
   const existing = id ? myProperties.find((p) => String(p.id) === id) : undefined;
   const isEditing = id !== undefined;
+  const approvedOwnerLocked = isEditing && existing?.approvalStatus === 'APPROVED' && user?.role !== 'ADMIN';
   const populatedPropertyId = useRef<string | undefined>(undefined);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -464,6 +465,7 @@ if (step === 3) {
       : YANGON_DEFAULT_CENTER);
 
   const handleMapPositionChange = ([latitude, longitude]: MapCoordinates) => {
+    if (approvedOwnerLocked) return;
     updateForm({ latitude, longitude });
   };
 
@@ -626,6 +628,7 @@ if (step === 3) {
           <div className="form-card">
           <div onKeyDown={handleFormKeyDown}>
             <div className="form-card-body">
+              {approvedOwnerLocked && <div className="approved-property-lock-notice" role="status"><ShieldCheck /><span>This listing has been approved. Important property details are locked to preserve the information reviewed by the administrator.</span></div>}
               {currentStep === 1 && (
                 <div>
                   <div className="form-section-header">
@@ -649,6 +652,7 @@ if (step === 3) {
                     <input
                       type="text"
                       value={formData.title}
+                      disabled={approvedOwnerLocked}
                       onChange={(e) => updateForm({ title: e.target.value })}
                       className={`form-input ${errors.title ? 'error' : ''}`}
                       placeholder="e.g., Modern Waterfront Residence"
@@ -674,6 +678,7 @@ if (step === 3) {
                               key={type.value}
                               type="button"
                               onClick={() => updateForm({ propertyType: type.value })}
+                              disabled={approvedOwnerLocked}
                               className={`property-type-option ${formData.propertyType === type.value ? 'active' : ''}`}
                               aria-pressed={formData.propertyType === type.value}
                             >
@@ -697,6 +702,7 @@ if (step === 3) {
                         <button
                           type="button"
                           onClick={() => updateForm({ status: 'FOR_SALE' })}
+                          disabled={approvedOwnerLocked}
                           className={`status-toggle-btn ${formData.status === 'FOR_SALE' ? 'active' : ''}`}
                         >
                           For Sale
@@ -704,6 +710,7 @@ if (step === 3) {
                         <button
                           type="button"
                           onClick={() => updateForm({ status: 'FOR_RENT' })}
+                          disabled={approvedOwnerLocked}
                           className={`status-toggle-btn ${formData.status === 'FOR_RENT' ? 'active' : ''}`}
                         >
                           For Rent
@@ -722,6 +729,7 @@ if (step === 3) {
                       <input
                         type="number"
                         value={formData.price}
+                        disabled={approvedOwnerLocked}
                         onChange={(e) => updateForm({ price: e.target.value })}
                         className={`form-input ${errors.price ? 'error' : ''}`}
                         placeholder="0"
@@ -740,6 +748,7 @@ if (step === 3) {
                         <input
                           type="number"
                           value={formData.area}
+                          disabled={approvedOwnerLocked}
                           onChange={(e) => updateForm({ area: e.target.value })}
                           className={`form-input ${errors.area ? 'error' : ''}`}
                           placeholder="e.g., 2400"
@@ -799,6 +808,7 @@ if (step === 3) {
                           </label>
                           <select
                             value={formData.bedrooms}
+                            disabled={approvedOwnerLocked}
                             onChange={(e) => updateForm({ bedrooms: Number(e.target.value) })}
                             className={`form-select ${errors.bedrooms ? 'error' : ''}`}
                           >
@@ -814,6 +824,7 @@ if (step === 3) {
                           </label>
                           <select
                             value={formData.bathrooms}
+                            disabled={approvedOwnerLocked}
                             onChange={(e) => updateForm({ bathrooms: Number(e.target.value) })}
                             className={`form-select ${errors.bathrooms ? 'error' : ''}`}
                           >
@@ -829,6 +840,7 @@ if (step === 3) {
                           </label>
                           <select
                             value={formData.parking}
+                            disabled={approvedOwnerLocked}
                             onChange={(e) => updateForm({ parking: e.target.value === '' ? '' : Number(e.target.value) })}
                             className="form-select"
                           >
@@ -845,6 +857,7 @@ if (step === 3) {
                           <input
                             type="number"
                             value={formData.yearBuilt}
+                            disabled={approvedOwnerLocked}
                             onChange={(e) => updateForm({ yearBuilt: e.target.value })}
                             className={`form-input ${errors.yearBuilt ? 'error' : ''}`}
                             placeholder="2024"
@@ -862,6 +875,7 @@ if (step === 3) {
                         <input
                           type="number"
                           value={formData.area}
+                          disabled={approvedOwnerLocked}
                           onChange={(e) => updateForm({ area: e.target.value })}
                           className={`form-input ${errors.area ? 'error' : ''}`}
                           placeholder="e.g., 2400"
@@ -897,6 +911,7 @@ if (step === 3) {
                       </label>
                       <select
                         value={formData.township}
+                        disabled={approvedOwnerLocked}
                         onChange={(e) => updateForm({ township: e.target.value })}
                         className={`form-select ${errors.township ? 'error' : ''}`}
                       >
@@ -945,6 +960,7 @@ if (step === 3) {
                       <input
                         type="text"
                         value={formData.zipCode}
+                        disabled={approvedOwnerLocked}
                         onChange={(e) => updateForm({ zipCode: e.target.value })}
                         className="form-input"
                         placeholder="11181"
@@ -959,6 +975,7 @@ if (step === 3) {
                     <input
                       type="text"
                       value={formData.streetAddress}
+                      disabled={approvedOwnerLocked}
                       onChange={(e) => updateForm({ streetAddress: e.target.value })}
                       className={`form-input ${errors.streetAddress ? 'error' : ''}`}
                       placeholder="e.g., No. 45, Shwegondine Road"
@@ -970,7 +987,7 @@ if (step === 3) {
                     <div className="property-map-heading">
                       <div>
                         <p className="property-map-title">Pin the property location</p>
-                        <p className="property-map-help">Click the map or drag the marker to set the exact location.</p>
+                        <p className="property-map-help">{approvedOwnerLocked ? 'Approved location is read-only.' : 'Click the map or drag the marker to set the exact location.'}</p>
                       </div>
                       <div className="property-map-coordinates" aria-live="polite">
                         {propertyPosition ? (
@@ -986,7 +1003,7 @@ if (step === 3) {
                     <PropertyMap
                       center={mapCenter}
                       position={propertyPosition}
-                      editable
+                      editable={!approvedOwnerLocked}
                       onPositionChange={handleMapPositionChange}
                     />
                   </div>
@@ -1015,6 +1032,7 @@ if (step === 3) {
                     </label>
                     <textarea
                       value={formData.description}
+                      disabled={approvedOwnerLocked}
                       onChange={(e) => updateForm({ description: e.target.value })}
                       className={`form-textarea ${errors.description ? 'error' : ''}`}
                       placeholder="Describe your property — highlight what makes it special. Mention views, recent renovations, standout features, and neighborhood character."
@@ -1034,6 +1052,7 @@ if (step === 3) {
                     </label>
                     <select
                       value={formData.ownershipType}
+                      disabled={approvedOwnerLocked}
                       onChange={(e) => updateForm({ ownershipType: e.target.value as OwnershipType | '' })}
                       className="form-select"
                     >
@@ -1058,6 +1077,7 @@ if (step === 3) {
                             key={feature}
                             type="button"
                             onClick={() => toggleFeature(feature)}
+                            disabled={approvedOwnerLocked}
                             className={`feature-tag ${formData.features.includes(feature) ? 'active' : ''}`}
                           >
                             {label}
@@ -1079,6 +1099,7 @@ if (step === 3) {
                       <button
                         type="button"
                         onClick={() => updateForm({ hasGrant: !formData.hasGrant })}
+                        disabled={approvedOwnerLocked}
                         className={`doc-check ${formData.hasGrant ? 'is-checked' : ''}`}
                       >
                         <div className={`doc-checkbox ${formData.hasGrant ? 'checked' : ''}`}>
@@ -1097,6 +1118,7 @@ if (step === 3) {
                       <button
                         type="button"
                         onClick={() => updateForm({ hasPermit: !formData.hasPermit })}
+                        disabled={approvedOwnerLocked}
                         className={`doc-check ${formData.hasPermit ? 'is-checked' : ''}`}
                       >
                         <div className={`doc-checkbox ${formData.hasPermit ? 'checked' : ''}`}>
@@ -1135,7 +1157,7 @@ if (step === 3) {
                           accept="image/jpeg,image/png"
                           className={`form-input ${errors.nrcDocumentToken ? 'error' : ''}`}
                           onChange={handleNrcUpload}
-                          disabled={isEditing && !!formData.nrcDocumentFileName && !formData.nrcDocumentFile}
+                          disabled={approvedOwnerLocked || (isEditing && !!formData.nrcDocumentFileName && !formData.nrcDocumentFile)}
                         />
                         {formData.nrcDocumentFileName && (
                           <p className="verification-file-name">
@@ -1159,7 +1181,7 @@ if (step === 3) {
                           accept="image/jpeg,image/png,application/pdf"
                           className={`form-input ${errors.ownershipDocumentToken ? 'error' : ''}`}
                           onChange={handleOwnershipUpload}
-                          disabled={isEditing && !!formData.ownershipDocumentFileName && !formData.ownershipDocumentFile}
+                          disabled={approvedOwnerLocked || (isEditing && !!formData.ownershipDocumentFileName && !formData.ownershipDocumentFile)}
                         />
                         {formData.ownershipDocumentFileName && (
                           <p className="verification-file-name">
@@ -1200,7 +1222,7 @@ if (step === 3) {
                       accept="image/jpeg,image/png,image/webp"
                       className="form-input"
                       onChange={handleImageUpload}
-                      disabled={uploadingImage}
+                      disabled={approvedOwnerLocked || uploadingImage}
                     />
                     <p className="form-section-desc">
                       JPEG, PNG, or WebP. Maximum file size: 5 MB.
@@ -1217,6 +1239,7 @@ if (step === 3) {
                       className="form-input"
                       placeholder="https://example.com/property.jpg"
                       value={formData.imageUrl}
+                      disabled={approvedOwnerLocked}
                       onChange={(e) => updateForm({ imageUrl: e.target.value })}
                     />
                     {formData.imageUrl && (
@@ -1232,6 +1255,7 @@ if (step === 3) {
                         <button
                           type="button"
                           onClick={() => updateForm({ imageUrl: '' })}
+                          disabled={approvedOwnerLocked}
                           className="image-preview-remove"
                         >
                           <X className="w-4 h-4" />
@@ -1404,7 +1428,7 @@ if (step === 3) {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
-                <button type="button" onClick={handleSubmit} className="form-btn-submit" disabled={loading || uploadingImage || propertiesLoading || (isEditing && !existing)}>
+                <button type="button" onClick={handleSubmit} className="form-btn-submit" disabled={approvedOwnerLocked || loading || uploadingImage || propertiesLoading || (isEditing && !existing)}>
                   {loading || uploadingImage ? (
                     <span className="auth-loading" />
                   ) : (

@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -131,6 +132,15 @@ public class PropertyService {
             throw new RuntimeException("You can only edit your own properties");
         }
 
+        if (property.getApprovalStatus() == ApprovalStatus.APPROVED
+                && currentUser.getRole() != UserRole.ADMIN
+                && hasApprovedPropertyChanges(property, request)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "This listing has been approved. Important property details are locked to preserve the information reviewed by the administrator."
+            );
+        }
+
         property.setTitle(request.getTitle());
         property.setDescription(request.getDescription());
         property.setPrice(request.getPrice());
@@ -157,6 +167,49 @@ public class PropertyService {
 
         property = propertyRepository.save(property);
         return toResponse(property);
+    }
+
+    private boolean hasApprovedPropertyChanges(Property property, PropertyRequest request) {
+        return !sameText(property.getTitle(), request.getTitle())
+                || !sameText(property.getDescription(), request.getDescription())
+                || differentMoney(property.getPrice(), request.getPrice())
+                || !sameText(property.getLocation(), request.getLocation())
+                || property.getPropertyType() != request.getPropertyType()
+                || property.getStatus() != request.getStatus()
+                || !Objects.equals(property.getBedrooms(), request.getBedrooms())
+                || !Objects.equals(property.getBathrooms(), request.getBathrooms())
+                || !Objects.equals(property.getArea(), request.getArea())
+                || !Objects.equals(property.getParking(), request.getParking())
+                || !Objects.equals(property.getYearBuilt(), request.getYearBuilt())
+                || property.getOwnershipType() != request.getOwnershipType()
+                || !sameText(property.getStreetAddress(), request.getStreetAddress())
+                || !sameText(property.getTownship(), request.getTownship())
+                || !sameText(property.getCity(), request.getCity())
+                || !sameText(property.getStateRegion(), request.getStateRegion())
+                || !sameText(property.getZipCode(), request.getZipCode())
+                || !Objects.equals(Boolean.TRUE.equals(property.getHasGrant()), Boolean.TRUE.equals(request.getHasGrant()))
+                || !Objects.equals(Boolean.TRUE.equals(property.getHasPermit()), Boolean.TRUE.equals(request.getHasPermit()))
+                || !Objects.equals(property.getLatitude(), request.getLatitude())
+                || !Objects.equals(property.getLongitude(), request.getLongitude())
+                || !Objects.equals(property.getFeatures() == null ? new HashSet<>() : property.getFeatures(), request.getFeatures() == null ? new HashSet<>() : new HashSet<>(request.getFeatures()))
+                || !sameText(property.getImageUrl(), request.getImageUrl())
+                || hasReplacementToken(request.getNrcDocumentToken())
+                || hasReplacementToken(request.getOwnershipDocumentToken());
+    }
+
+    private boolean differentMoney(BigDecimal current, BigDecimal requested) {
+        if (current == null || requested == null) return !Objects.equals(current, requested);
+        return current.compareTo(requested) != 0;
+    }
+
+    private boolean sameText(String current, String requested) {
+        String currentValue = current == null ? "" : current.trim();
+        String requestedValue = requested == null ? "" : requested.trim();
+        return currentValue.equals(requestedValue);
+    }
+
+    private boolean hasReplacementToken(String token) {
+        return token != null && !token.isBlank();
     }
 
     public String deleteProperty(Long id) {

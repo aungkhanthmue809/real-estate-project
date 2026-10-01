@@ -10444,6 +10444,11 @@ body {
 @media (max-width:950px) { .admin-history-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }.admin-history-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:560px) { .admin-history-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.admin-history-summary { gap:9px; }.admin-history-summary article { padding:12px; }.admin-history-summary strong { font-size:16px; }.admin-history-table-heading { align-items:flex-start;flex-direction:column; }.admin-history-detail dl { grid-template-columns:1fr; } }
 
+.approved-property-lock-notice { display:flex;align-items:flex-start;gap:10px;margin:0 0 20px;padding:13px 15px;border:1px solid rgba(213,157,96,.42);border-radius:12px;background:#fff5e5;color:#684d36;font-size:12px;line-height:1.5; }
+.approved-property-lock-notice svg { width:17px;flex:0 0 auto;color:#b66b2c; }
+.form-card input:disabled,.form-card select:disabled,.form-card textarea:disabled { color:#67544d;opacity:.78;cursor:not-allowed; }
+.form-card button:disabled { cursor:not-allowed; }
+
 /* Admin user directory: Lovable-inspired composition backed by real UrbanNest user APIs. */
 .admin-user-directory { min-height:100vh; padding-bottom:72px; }
 .admin-users-main { padding-top:52px; }
