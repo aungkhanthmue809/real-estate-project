@@ -7,6 +7,7 @@ import type {
   Property,
   PropertyPostingFee,
   PropertyAnalytics,
+  PropertyUploadHistoryResponse,
   PropertyRequest,
   PropertyType,
   User,
@@ -135,6 +136,8 @@ export const adminAPI = {
     api.put<PropertyPostingFee>(`/api/admin/property-posting-fees/${propertyType}`, { feeAmount }),
   getContactMessages: () => api.get<ContactMessage[]>('/api/admin/contact-messages'),
   getPropertyAnalytics: () => api.get<PropertyAnalytics>('/api/admin/analytics/properties'),
+  getPropertyUploadHistory: (params: Record<string, string | number | undefined>) =>
+    api.get<PropertyUploadHistoryResponse>('/api/admin/property-upload-history', { params }),
 };
 
 export default api;

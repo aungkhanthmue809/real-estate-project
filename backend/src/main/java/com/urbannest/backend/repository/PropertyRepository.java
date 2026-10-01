@@ -11,6 +11,10 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.Instant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.urbannest.backend.repository.PropertyUploadHistoryAggregateProjection;
 
 public interface PropertyRepository extends JpaRepository<Property, Long> {
 
@@ -33,6 +37,74 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
     @Query("SELECT COALESCE(SUM(p.postingFeeAtSubmission), 0) FROM Property p WHERE p.postingFeeAtSubmission IS NOT NULL")
     BigDecimal sumPostingFeeAtSubmission();
+
+    @Query(value = "SELECT p FROM Property p JOIN p.owner owner " +
+            "WHERE p.createdAt >= :fromDate " +
+            "AND p.createdAt < :toDate " +
+            "AND (:propertyType IS NULL OR p.propertyType = :propertyType) " +
+            "AND (:listingStatus IS NULL OR p.status = :listingStatus) " +
+            "AND (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
+            "AND (CAST(:township AS string) IS NULL OR LOWER(p.township) = LOWER(CAST(:township AS string))) " +
+            "AND (CAST(:search AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR LOWER(owner.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR LOWER(owner.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR CAST(p.id AS string) LIKE CONCAT('%', CAST(:search AS string), '%')) " +
+            "ORDER BY " +
+            "CASE WHEN :sort = 'POSTING_FEE_DESC' AND p.postingFeeAtSubmission IS NULL THEN 1 ELSE 0 END ASC, " +
+            "CASE WHEN :sort = 'POSTING_FEE_ASC' AND p.postingFeeAtSubmission IS NULL THEN 1 ELSE 0 END ASC, " +
+            "CASE WHEN :sort = 'NEWEST' THEN p.createdAt END DESC, " +
+            "CASE WHEN :sort = 'OLDEST' THEN p.createdAt END ASC, " +
+            "CASE WHEN :sort = 'POSTING_FEE_DESC' THEN p.postingFeeAtSubmission END DESC, " +
+            "CASE WHEN :sort = 'POSTING_FEE_ASC' THEN p.postingFeeAtSubmission END ASC, " +
+            "CASE WHEN :sort = 'PROPERTY_PRICE_DESC' THEN p.price END DESC, " +
+            "CASE WHEN :sort = 'PROPERTY_PRICE_ASC' THEN p.price END ASC, " +
+            "p.createdAt DESC, p.id DESC",
+            countQuery = "SELECT COUNT(p) FROM Property p JOIN p.owner owner " +
+                    "WHERE p.createdAt >= :fromDate " +
+                    "AND p.createdAt < :toDate " +
+                    "AND (:propertyType IS NULL OR p.propertyType = :propertyType) " +
+                    "AND (:listingStatus IS NULL OR p.status = :listingStatus) " +
+                    "AND (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
+                    "AND (CAST(:township AS string) IS NULL OR LOWER(p.township) = LOWER(CAST(:township AS string))) " +
+                    "AND (CAST(:search AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+                    "OR LOWER(owner.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+                    "OR LOWER(owner.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+                    "OR CAST(p.id AS string) LIKE CONCAT('%', CAST(:search AS string), '%'))")
+    Page<Property> searchUploadHistory(
+            @Param("fromDate") Instant fromDate,
+            @Param("toDate") Instant toDate,
+            @Param("propertyType") PropertyType propertyType,
+            @Param("listingStatus") SaleStatus listingStatus,
+            @Param("approvalStatus") ApprovalStatus approvalStatus,
+            @Param("township") String township,
+            @Param("search") String search,
+            @Param("sort") String sort,
+            Pageable pageable
+    );
+
+    @Query("SELECT COALESCE(SUM(p.postingFeeAtSubmission), 0) AS totalRevenue, " +
+            "COALESCE(SUM(CASE WHEN p.postingFeeAtSubmission IS NOT NULL THEN 1 ELSE 0 END), 0) AS feeRecordedCount, " +
+            "COALESCE(SUM(CASE WHEN p.postingFeeAtSubmission IS NULL THEN 1 ELSE 0 END), 0) AS legacyFeeCount " +
+            "FROM Property p JOIN p.owner owner " +
+            "WHERE p.createdAt >= :fromDate " +
+            "AND p.createdAt < :toDate " +
+            "AND (:propertyType IS NULL OR p.propertyType = :propertyType) " +
+            "AND (:listingStatus IS NULL OR p.status = :listingStatus) " +
+            "AND (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
+            "AND (CAST(:township AS string) IS NULL OR LOWER(p.township) = LOWER(CAST(:township AS string))) " +
+            "AND (CAST(:search AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR LOWER(owner.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR LOWER(owner.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+            "OR CAST(p.id AS string) LIKE CONCAT('%', CAST(:search AS string), '%'))")
+    PropertyUploadHistoryAggregateProjection aggregateUploadHistory(
+            @Param("fromDate") Instant fromDate,
+            @Param("toDate") Instant toDate,
+            @Param("propertyType") PropertyType propertyType,
+            @Param("listingStatus") SaleStatus listingStatus,
+            @Param("approvalStatus") ApprovalStatus approvalStatus,
+            @Param("township") String township,
+            @Param("search") String search
+    );
 
     @Query("SELECT p FROM Property p WHERE p.approvalStatus = :approvalStatus " +
            "AND (CAST(:keyword AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) " +

@@ -10,7 +10,7 @@ import { Dashboard } from './pages/Dashboard';
 import { AddEditProperty } from './pages/AddEditProperty';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminDataManagement } from './pages/AdminDataManagement';
-import { AdminUploadHistoryPlaceholder } from './pages/AdminUploadHistoryPlaceholder';
+import { AdminUploadHistory } from './pages/AdminUploadHistory';
 import { AuthProvider } from './contexts/AuthContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PropertiesProvider } from './contexts/PropertiesContext';
@@ -53,7 +53,7 @@ function AppRoutes() {
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/manage-all" element={<ProtectedRoute requireAdmin><AdminDataManagement /></ProtectedRoute>} />
-          <Route path="/admin/upload-history" element={<ProtectedRoute requireAdmin><AdminUploadHistoryPlaceholder /></ProtectedRoute>} />
+          <Route path="/admin/upload-history" element={<ProtectedRoute requireAdmin><AdminUploadHistory /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>

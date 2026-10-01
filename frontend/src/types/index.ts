@@ -52,6 +52,44 @@ export interface PropertyAnalyticsDistribution {
   count: number;
 }
 
+export type PropertyUploadHistorySort = 'NEWEST' | 'OLDEST' | 'POSTING_FEE_DESC' | 'POSTING_FEE_ASC' | 'PROPERTY_PRICE_DESC' | 'PROPERTY_PRICE_ASC';
+
+export interface PropertyUploadHistoryItem {
+  propertyId: number;
+  title: string;
+  propertyType: PropertyType;
+  listingType: SaleStatus;
+  township?: string | null;
+  status: ApprovalStatus;
+  ownerId: number;
+  ownerUsername: string;
+  submittedAt: string;
+  propertyPrice: number;
+  postingFeeAtSubmission?: number | null;
+  description: string;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  streetAddress?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  zipCode?: string | null;
+  ownershipType?: OwnershipType | null;
+  hasGrant?: boolean;
+  hasPermit?: boolean;
+}
+
+export interface PropertyUploadHistoryResponse {
+  content: PropertyUploadHistoryItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  filteredPostingFeeTotal: number;
+  filteredFeeRecordedCount: number;
+  filteredLegacyFeeCount: number;
+}
+
 export interface CreateContactMessageRequest {
   fullName: string;
   email: string;
