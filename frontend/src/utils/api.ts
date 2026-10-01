@@ -6,6 +6,7 @@ import type {
   Notification,
   Property,
   PropertyPostingFee,
+  PropertyAnalytics,
   PropertyRequest,
   PropertyType,
   User,
@@ -133,6 +134,7 @@ export const adminAPI = {
   updatePostingFee: (propertyType: PropertyType, feeAmount: number) =>
     api.put<PropertyPostingFee>(`/api/admin/property-posting-fees/${propertyType}`, { feeAmount }),
   getContactMessages: () => api.get<ContactMessage[]>('/api/admin/contact-messages'),
+  getPropertyAnalytics: () => api.get<PropertyAnalytics>('/api/admin/analytics/properties'),
 };
 
 export default api;

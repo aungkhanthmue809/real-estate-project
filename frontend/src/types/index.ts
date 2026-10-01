@@ -29,6 +29,29 @@ export interface PropertyPostingFee {
   feeAmount: number;
 }
 
+export interface PropertyAnalytics {
+  totalProperties: number;
+  pendingProperties: number;
+  approvedProperties: number;
+  rejectedProperties: number;
+  totalPostingFeeRevenue: number;
+  feeRecordedListings: number;
+  legacyListingsWithoutFee: number;
+  revenueByPropertyType: PropertyAnalyticsRevenue[];
+  propertyDistribution: PropertyAnalyticsDistribution[];
+}
+
+export interface PropertyAnalyticsRevenue {
+  propertyType: PropertyType;
+  count: number;
+  revenue: number;
+}
+
+export interface PropertyAnalyticsDistribution {
+  propertyType: PropertyType;
+  count: number;
+}
+
 export interface CreateContactMessageRequest {
   fullName: string;
   email: string;

@@ -6,15 +6,18 @@ import { useProperties } from '../contexts/PropertiesContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { NotificationsBell } from '../components/NotificationsBell';
 import { UrbanNestLogo } from '../components/UrbanNestLogo';
+import { DonutChart } from '../components/DonutChart';
 import { adminAPI, propertyPostingFeeAPI } from '../utils/api';
 import { resolvePropertyImageUrl } from '../utils/imageUrl';
 import { formatMMKAmount, formatPropertyPrice } from '../utils/price';
-import type { ContactMessage, Property, PropertyPostingFee, PropertyType } from '../types';
+import type { ContactMessage, Property, PropertyAnalytics, PropertyPostingFee, PropertyType } from '../types';
 
 type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 const formatDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return iso; } };
 const formatDateTime = (iso: string) => { try { return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
 const typeLabel = (type: PropertyType) => type.charAt(0) + type.slice(1).toLowerCase();
+const PROPERTY_TYPE_COLORS: Record<PropertyType, string> = { APARTMENT: '#d8753d', HOUSE: '#9a694d', CONDO: '#6c9b80', LAND: '#c56a73', TOWNHOUSE: '#8d7b9f' };
+const ANALYTICS_TYPES: PropertyType[] = ['APARTMENT', 'HOUSE', 'CONDO', 'LAND'];
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -39,6 +42,9 @@ export function AdminDashboard() {
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesError, setMessagesError] = useState('');
+  const [analytics, setAnalytics] = useState<PropertyAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState('');
   const [focusedTargetId, setFocusedTargetId] = useState<string | null>(null);
   const handledFocusRequestRef = useRef<string | null>(null);
 
@@ -61,6 +67,13 @@ export function AdminDashboard() {
 
   useEffect(() => { void loadAdminProperties(true); }, [loadAdminProperties]);
   useEffect(() => { void loadContactMessages(true); }, [loadContactMessages]);
+  const loadAnalytics = useCallback(async (showLoading = false) => {
+    if (showLoading) setAnalyticsLoading(true);
+    try { const { data } = await adminAPI.getPropertyAnalytics(); setAnalytics(data); setAnalyticsError(''); }
+    catch { setAnalyticsError('Unable to load posting-fee analytics.'); }
+    finally { if (showLoading) setAnalyticsLoading(false); }
+  }, []);
+  useEffect(() => { void loadAnalytics(true); }, [loadAnalytics]);
   useEffect(() => {
     if (user?.role === 'ADMIN' && newlyReceived.some((item) => item.type === 'PROPERTY_APPROVAL_REQUESTED')) void loadAdminProperties();
     if (user?.role === 'ADMIN' && newlyReceived.some((item) => item.type === 'CONTACT_MESSAGE_RECEIVED')) void loadContactMessages();
@@ -89,6 +102,10 @@ export function AdminDashboard() {
     { icon: XCircle, label: 'Rejected Listings', value: rejected.length, meta: 'Declined submissions', tone: 'red' },
     { icon: Home, label: 'Total Properties', value: properties.length, meta: 'All submitted listings', tone: 'neutral' },
   ];
+  const distributionSegments = (analytics?.propertyDistribution ?? []).map((item) => ({ label: typeLabel(item.propertyType), value: item.count, color: PROPERTY_TYPE_COLORS[item.propertyType] ?? '#a58f83' }));
+  const revenueRows = ANALYTICS_TYPES.map((propertyType) => analytics?.revenueByPropertyType.find((item) => item.propertyType === propertyType) ?? { propertyType, count: 0, revenue: 0 });
+  const revenueSegments = revenueRows.map((item) => ({ label: typeLabel(item.propertyType), value: item.revenue, color: PROPERTY_TYPE_COLORS[item.propertyType] }));
+  const formatRevenue = (value: number) => formatMMKAmount(value);
 
   useEffect(() => {
     if (focusType !== 'property' || !rawFocusId || loading) return;
@@ -169,7 +186,7 @@ export function AdminDashboard() {
       <main className="admin-cockpit-main">
         <section className="admin-cockpit-intro"><div><span className="admin-header-kicker"><i />Yangon property registry</span><h1>Moderation &amp; Operations</h1><p>Review property submissions, manage posting fees, and monitor incoming contact messages from one operational workspace.</p></div></section>
         {(loading || error) && <div className={`admin-cockpit-notice${error ? ' error' : ''}`}>{loading ? 'Loading the property workspace...' : error}</div>}
-        <section className="admin-cockpit-metrics" aria-label="Property metrics">{stats.map((stat) => <article key={stat.label} className={`admin-cockpit-metric ${stat.tone}`}><div><span>{stat.label}</span><span className="admin-cockpit-metric-icon"><stat.icon /></span></div><strong>{stat.value}</strong><small>{stat.meta}</small></article>)}</section>
+        <section className="admin-cockpit-metrics" aria-label="Property metrics">{stats.map((stat) => <article key={stat.label} className={`admin-cockpit-metric ${stat.tone}${stat.label === 'Total Properties' ? ' admin-total-properties-metric' : ''}`}><div><span>{stat.label}</span><span className="admin-cockpit-metric-icon"><stat.icon /></span></div>{stat.label === 'Total Properties' && analytics ? <div className="admin-total-properties-chart"><DonutChart segments={distributionSegments} total={analytics.totalProperties} centerLabel="Total" ariaLabel="Property distribution by type" size={104} /><div className="admin-mini-legend">{distributionSegments.map((segment) => <span key={segment.label}><i style={{ backgroundColor: segment.color }} />{segment.label} {analytics.totalProperties ? Math.round((segment.value / analytics.totalProperties) * 100) : 0}%</span>)}</div></div> : <><strong>{stat.value}</strong><small>{stat.meta}</small></>}</article>)}</section>
 
         <section className="admin-cockpit-workspace" id="property-moderation">
           <div className="admin-cockpit-left">
@@ -188,6 +205,7 @@ export function AdminDashboard() {
           </div>
 
           <aside className="admin-cockpit-rail">
+            <section className="admin-cockpit-rail-card admin-revenue-card"><div className="admin-cockpit-rail-heading"><span><Home /></span><div><h2>Posting Fee Revenue</h2><p>Historical submission fee analytics.</p></div></div>{analyticsLoading ? <div className="admin-rail-status">Loading posting-fee analytics...</div> : analyticsError ? <div className="admin-rail-status error">{analyticsError}</div> : analytics && <><div className="admin-revenue-summary"><DonutChart segments={revenueSegments} total={analytics.totalPostingFeeRevenue} centerLabel="MMK" ariaLabel="Posting fee revenue by property type" /><div><strong>{formatRevenue(analytics.totalPostingFeeRevenue)}</strong><span>Total posting fees generated</span></div></div><div className="admin-revenue-breakdown">{revenueRows.map((row) => <div key={row.propertyType}><span><i style={{ backgroundColor: PROPERTY_TYPE_COLORS[row.propertyType] }} />{typeLabel(row.propertyType)}</span><strong>{formatRevenue(row.revenue)}</strong></div>)}</div><p className="admin-revenue-context">{analytics.feeRecordedListings} {analytics.feeRecordedListings === 1 ? 'listing' : 'listings'} with recorded fee history.</p>{analytics.legacyListingsWithoutFee > 0 && <p className="admin-revenue-legacy">{analytics.legacyListingsWithoutFee} older {analytics.legacyListingsWithoutFee === 1 ? 'listing does' : 'listings do'} not contain historical posting-fee records and {analytics.legacyListingsWithoutFee === 1 ? 'is' : 'are'} excluded from revenue totals.</p>}<p className="admin-revenue-note">Calculated using the posting fee recorded when each property was submitted.</p><Link className="admin-revenue-see-more" to="/admin/upload-history">See More <span aria-hidden="true">→</span></Link></>}</section>
             <section className="admin-cockpit-rail-card"><div className="admin-cockpit-rail-heading"><span><Settings /></span><div><h2>Posting Fee Schedule</h2><p>Current fees by property type.</p></div></div>{feeLoading ? <div className="admin-rail-status">Loading posting fees...</div> : postingFees.length === 0 ? <div className="admin-rail-status error">{feeError || 'No posting fees are configured.'}</div> : <div className="admin-cockpit-fees">{postingFees.map((fee) => <div className="admin-cockpit-fee" key={fee.propertyType}>{editingFee === fee.propertyType ? <div className="admin-cockpit-fee-editor"><label htmlFor={`fee-${fee.propertyType}`}>{typeLabel(fee.propertyType)}</label><div><span>MMK</span><input id={`fee-${fee.propertyType}`} type="number" min="0" max="999999999999" step="1" value={feeDrafts[fee.propertyType] ?? ''} onChange={(event) => setFeeDrafts((current) => ({ ...current, [fee.propertyType]: event.target.value }))} /></div><button type="button" onClick={() => savePostingFee(fee.propertyType)} disabled={savingFee === fee.propertyType}>{savingFee === fee.propertyType ? 'Saving...' : 'Save'}</button><button type="button" className="cancel" onClick={() => cancelEditingFee(fee)}>Cancel</button></div> : <><span>{typeLabel(fee.propertyType)}</span><strong>{formatMMKAmount(fee.feeAmount)}</strong><button type="button" onClick={() => startEditingFee(fee)}>Edit</button></>}</div>)}</div>}{(feeMessage || (feeError && postingFees.length > 0)) && <div className={`admin-rail-status ${feeError ? 'error' : 'success'}`} aria-live="polite">{feeError || feeMessage}</div>}</section>
 
             <section className="admin-cockpit-rail-card"><div className="admin-cockpit-rail-heading"><span><Mail /></span><div><h2>Contact Messages</h2><p>{contactMessages.length} messages in the inbox.</p></div></div>{messagesLoading ? <div className="admin-rail-status">Loading contact messages...</div> : messagesError ? <div className="admin-rail-status error">{messagesError}</div> : contactMessages.length === 0 ? <div className="admin-cockpit-rail-empty">No contact messages yet.</div> : <div className="admin-cockpit-messages">{contactMessages.map((message) => <article id={`admin-contact-${message.id}`} key={message.id} tabIndex={-1} className={focusedTargetId === `admin-contact-${message.id}` ? 'admin-focus-highlight' : ''}><div><strong>{message.fullName}</strong><time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time></div><span>{message.email}{message.phone ? ` · ${message.phone}` : ''}</span><p>{message.message}</p></article>)}</div>}</section>

@@ -10390,6 +10390,36 @@ body {
 @media (max-width:850px) { .admin-cockpit-main { width:min(100% - 28px,760px);padding-top:34px; }.admin-cockpit-intro { align-items:flex-start;flex-direction:column; }.admin-cockpit-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.admin-cockpit-workspace { grid-template-columns:minmax(0,1fr); }.admin-cockpit-rail { position:static; }.admin-cockpit-identity > span:last-child { display:none; } }
 @media (max-width:560px) { .admin-cockpit-topbar { padding:8px 10px 0; }.admin-cockpit-topbar-inner { min-height:66px;padding:0 12px;border-radius:14px; }.admin-cockpit-brand small { display:none; }.admin-cockpit-brand strong { font-size:13px; }.admin-cockpit-account { gap:7px; }.admin-cockpit-avatar { display:none; }.admin-cockpit-main { width:calc(100% - 20px);padding-top:28px; }.admin-cockpit-intro h1 { font-size:34px; }.admin-cockpit-metrics { gap:9px; }.admin-cockpit-metric { min-height:128px;padding:15px; }.admin-cockpit-metric > strong { font-size:31px; }.admin-cockpit-tabs > small { display:none; }.admin-cockpit-listing { padding:13px; }.admin-cockpit-listing-topline { align-items:flex-start;flex-direction:column; }.admin-cockpit-listing-media,.admin-cockpit-listing.secondary .admin-cockpit-listing-media { min-height:220px; }.admin-cockpit-listing-heading { flex-direction:column; }.admin-cockpit-price { text-align:left; }.admin-cockpit-facts { grid-template-columns:1fr; }.admin-cockpit-owner { align-items:flex-start;flex-wrap:wrap; }.admin-cockpit-owner p { width:100%;margin-left:41px; }.admin-cockpit-listing-actions { align-items:stretch;flex-direction:column; }.admin-cockpit-listing-actions > div { display:grid;grid-template-columns:1fr 1fr; }.admin-cockpit-listing-actions button { width:100%; }.admin-cockpit-rail-card { padding:15px; } }
 
+.admin-total-properties-metric { min-height: 158px; }
+.admin-total-properties-chart { display:flex;align-items:center;gap:12px;margin-top:8px; }
+.admin-donut { position:relative; flex:0 0 auto; }
+.admin-donut svg { width:100%;height:100%;transform:rotate(-90deg);overflow:visible; }
+.admin-donut circle { fill:none;stroke-width:11; }
+.admin-donut-track { stroke:rgba(222,188,174,.32); }
+.admin-donut-segment { stroke-linecap:butt; }
+.admin-donut-center { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--cockpit-ink);pointer-events:none; }
+.admin-donut-center strong { font-size:18px;line-height:1; }
+.admin-donut-center small { margin-top:3px;color:#95766a;font-size:8px;text-transform:uppercase;letter-spacing:.08em; }
+.admin-mini-legend { display:flex;min-width:0;flex-direction:column;gap:4px;color:#8b7065;font-size:9px;line-height:1.2; }
+.admin-mini-legend span { display:flex;align-items:center;gap:4px;white-space:nowrap; }
+.admin-mini-legend i,.admin-revenue-breakdown i { width:7px;height:7px;display:inline-block;border-radius:50%; }
+.admin-revenue-card { overflow:hidden; }
+.admin-revenue-summary { display:flex;align-items:center;gap:14px;margin:4px 0 17px; }
+.admin-revenue-summary > div:last-child { min-width:0; }
+.admin-revenue-summary strong { display:block;color:var(--cockpit-ink);font-size:22px;line-height:1.15; }
+.admin-revenue-summary span { display:block;margin-top:4px;color:#8b7065;font-size:10px;line-height:1.35; }
+.admin-revenue-breakdown { display:grid;gap:7px;padding:11px 0;border-top:1px solid rgba(226,191,178,.32);border-bottom:1px solid rgba(226,191,178,.32); }
+.admin-revenue-breakdown > div { display:flex;align-items:center;justify-content:space-between;gap:8px;color:#7c6258;font-size:11px; }
+.admin-revenue-breakdown span { display:flex;align-items:center;gap:6px; }
+.admin-revenue-breakdown strong { color:var(--cockpit-ink);font-size:11px; }
+.admin-revenue-context,.admin-revenue-legacy,.admin-revenue-note { margin:11px 0 0;color:#8b7065;font-size:10px;line-height:1.45; }
+.admin-revenue-legacy { color:#9a6a43; }
+.admin-revenue-note { color:#96796e; }
+.admin-revenue-see-more { display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:15px;color:#9a4f2d;font-size:11px;font-weight:700;text-decoration:none; }
+.admin-revenue-see-more:hover { color:#6f321c; }
+.admin-placeholder-page { min-height:70vh; }
+@media (max-width:850px) { .admin-total-properties-metric { min-height:128px; }.admin-total-properties-chart { justify-content:flex-start; }.admin-revenue-summary strong { font-size:20px; } }
+
 /* Admin user directory: Lovable-inspired composition backed by real UrbanNest user APIs. */
 .admin-user-directory { min-height:100vh; padding-bottom:72px; }
 .admin-users-main { padding-top:52px; }

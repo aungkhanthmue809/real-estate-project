@@ -18,6 +18,22 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
     List<Property> findByApprovalStatus(ApprovalStatus approvalStatus);
 
+    long countByApprovalStatus(ApprovalStatus approvalStatus);
+
+    long countByPostingFeeAtSubmissionIsNotNull();
+
+    long countByPostingFeeAtSubmissionIsNull();
+
+    @Query("SELECT p.propertyType AS propertyType, COUNT(p) AS count FROM Property p GROUP BY p.propertyType")
+    List<PropertyTypeCountProjection> countGroupedByPropertyType();
+
+    @Query("SELECT p.propertyType AS propertyType, COUNT(p) AS count, COALESCE(SUM(p.postingFeeAtSubmission), 0) AS revenue " +
+           "FROM Property p WHERE p.postingFeeAtSubmission IS NOT NULL GROUP BY p.propertyType")
+    List<PropertyTypeRevenueProjection> revenueGroupedByPropertyType();
+
+    @Query("SELECT COALESCE(SUM(p.postingFeeAtSubmission), 0) FROM Property p WHERE p.postingFeeAtSubmission IS NOT NULL")
+    BigDecimal sumPostingFeeAtSubmission();
+
     @Query("SELECT p FROM Property p WHERE p.approvalStatus = :approvalStatus " +
            "AND (CAST(:keyword AS string) IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
